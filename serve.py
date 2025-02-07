@@ -191,6 +191,12 @@ def search_rank(q: str = ''):
     scores = [p[0] for p in pairs]
     return pids, scores
 
+def chemical_formulas_rank(q: str = ''):
+    # Here we will implement logic for our chemical formulas search engine,
+    # but for now, we will just return random results.
+    
+    return random_rank()
+
 # -----------------------------------------------------------------------------
 # primary application endpoints
 
@@ -244,10 +250,7 @@ def main():
     elif opt_rank == 'random':
         pids, scores = random_rank()
     elif opt_rank == 'chemical_formulas':
-        # TODO: implement pipeline for this function
-        # pids, scores = chemical_formulas_rank(opt_smiles_input)
-        
-        pass
+        pids, scores = chemical_formulas_rank(opt_smiles_input)
     else:
         raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
 
