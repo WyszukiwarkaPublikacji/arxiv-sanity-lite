@@ -4,4 +4,6 @@ __pycache__
 data
 *.ipynb
 secret_key.txt
+
 .venv
+venv
