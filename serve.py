@@ -191,6 +191,12 @@ def search_rank(q: str = ''):
     scores = [p[0] for p in pairs]
     return pids, scores
 
+def chemical_formulas_rank(q: str = ''):
+    # Here we will implement logic for our chemical formulas search engine,
+    # but for now, we will just return random results.
+    
+    return random_rank()
+
 # -----------------------------------------------------------------------------
 # primary application endpoints
 
@@ -217,6 +223,7 @@ def main():
     opt_time_filter = request.args.get('time_filter', default_time_filter) # number of days to filter by
     opt_skip_have = request.args.get('skip_have', default_skip_have) # hide papers we already have?
     opt_svm_c = request.args.get('svm_c', '') # svm C parameter
+    opt_smiles_input = request.args.get('smiles_input', '')
     opt_page_number = request.args.get('page_number', '1') # page number for pagination
 
     # if a query is given, override rank to be of type "search"
@@ -242,6 +249,8 @@ def main():
         pids, scores = time_rank()
     elif opt_rank == 'random':
         pids, scores = random_rank()
+    elif opt_rank == 'chemical_formulas':
+        pids, scores = chemical_formulas_rank(opt_smiles_input)
     else:
         raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
 

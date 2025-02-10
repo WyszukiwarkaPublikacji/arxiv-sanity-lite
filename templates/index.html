@@ -44,6 +44,7 @@ var move_page = function(int_offset) {
                     <option value="pid" {{ gvars.rank == 'pid' and 'selected' }}>pid</option>
                     <option value="time" {{ gvars.rank == 'time' and 'selected' }}>time</option>
                     <option value="random" {{ gvars.rank == 'random' and 'selected' }}>random</option>
+                    <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>chemical formulas</option>
                 </select>
 
                 <!-- current tags, simply in a text field -->
@@ -61,6 +62,9 @@ var move_page = function(int_offset) {
                 <!-- current svm_c, in a text field -->
                 <label for="svm_c">svm_c: </label>
                 <input name="svm_c" type="text" id="svm_c_field" value="{{ gvars.svm_c }}">
+
+                <label for="smiles_input">chemical SMILES: </label>
+                <input name="smiles_input" type="text" id="smiles_input" value="{{ gvars.smiles_input }}">
 
                 <!-- current skip_have: one of yes or no -->
                 <label for="skip_have">skip_have: </label>

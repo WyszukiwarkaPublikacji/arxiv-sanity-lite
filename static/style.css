@@ -269,6 +269,9 @@ body {
 #svm_c_field {
     width: 30px;
 }
+#smiles_input{
+    width: 300px;
+}
 #tagList {
     display: inline-block;
 }
