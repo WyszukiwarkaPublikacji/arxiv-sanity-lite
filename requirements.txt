@@ -5,10 +5,11 @@ itsdangerous==2.2.0
 Jinja2==3.1.5
 joblib==1.4.2
 MarkupSafe==3.0.2
-numpy==1.21.4
-scikit-learn==1.0.1
-scipy==1.10.1
-sgmllib3k==1.0.0
+numpy
+scikit-learn
+Scipy
+Sgmllib3k==1.0.0
 sqlitedict==1.7.0
 threadpoolctl==3.5.0
 Werkzeug==2.3.8
+pymilvus==2.5.4

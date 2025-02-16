@@ -8,6 +8,8 @@ import os
 import sqlite3, zlib, pickle, tempfile
 from sqlitedict import SqliteDict
 from contextlib import contextmanager
+from pymilvus import MilvusClient, DataType
+from aslite import config
 
 # -----------------------------------------------------------------------------
 # global configuration
@@ -103,7 +105,7 @@ flag='r': open for read-only
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
-
+EMBEDDING_DB_FILE = os.path.join(DATA_DIR, 'embeddings.db') #NOTE: once we set it up with docker it will probably need to be a standalone db
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     pdb = CompressedSqliteDict(PAPERS_DB_FILE, tablename='papers', flag=flag, autocommit=autocommit)
@@ -128,7 +130,33 @@ def get_email_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     edb = SqliteDict(DICT_DB_FILE, tablename='email', flag=flag, autocommit=autocommit)
     return edb
+def setup_chemical_embeddings_collection(client : MilvusClient):
+    
+    schema = MilvusClient.create_schema(auto_id=False)
+    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="chemical_embedding", datatype=DataType.BINARY_VECTOR, dim=config.chemical_embedding_size)
+    schema.add_field(field_name="paper_id", datatype=DataType.INT64)
+    schema.add_field(field_name="category", datatype=DataType.VARCHAR, max_length=127)
+    schema.add_field(field_name="SMILES", datatype=DataType.VARCHAR, max_length=65535)
+    schema.add_field(field_name="tags",datatype=DataType.ARRAY, element_type=DataType.VARCHAR, max_capacity=100, max_length=127)
+    index_params = client.prepare_index_params()
+    index_params.add_index(field_name="chemical_embedding", index_type=config.chemical_index_type, metric_type="JACCARD") 
+    client.create_collection(
+        collection_name="chemical_embeddings",
+        schema=schema,
+        index_params=index_params,
+        consistency_level=config.consistency_level
+    )
+def get_embeddings_db():
+    client = MilvusClient(EMBEDDING_DB_FILE)
+    if not client.has_collection("chemical_embeddings"):
+        setup_chemical_embeddings_collection(client)
+    return client
 
+
+    
+    
+    
 # -----------------------------------------------------------------------------
 """
 our "feature store" is currently just a pickle file, may want to consider hdf5 in the future
