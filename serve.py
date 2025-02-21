@@ -20,7 +20,7 @@ from flask import render_template
 from flask import g # global session-level object
 from flask import session
 
-from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
+from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db, get_embeddings_db
 from aslite.db import load_features
 
 # -----------------------------------------------------------------------------
@@ -191,9 +191,31 @@ def search_rank(q: str = ''):
     scores = [p[0] for p in pairs]
     return pids, scores
 
-def chemical_formulas_rank(q: str = ''):
-    # Here we will implement logic for our chemical formulas search engine,
-    # but for now, we will just return random results.
+import numpy as np
+from collections import defaultdict
+
+def chemical_formulas_rank(input_SMILES: str = ''):
+    
+    #TODO 
+    #* 1. Get SMILES-es from milvus database
+    #* 2. Compare them with input_SMILES
+    #* 3. Return pids and scores of ranking sorted by similarity
+    
+    #? Remember that in a single paper there are more than one SMILES, so we need to compare all of them
+    #? and return for each paper the score of most similar SMILES
+    
+    client = get_embeddings_db()
+    if not client.has_collection("chemical_embeddings"):
+        raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
+    
+    #TODO
+    # pids, scores = find_top_papers(client)
+    
+    # return pids, scores
+    
+    print("Top 50 Papers with Most Similar SMILES:")
+    for paper_id, score in top_papers:
+        print(f"Paper ID: {paper_id}, Similarity Score: {score}")
     
     return random_rank()
 
@@ -250,7 +272,7 @@ def main():
     elif opt_rank == 'random':
         pids, scores = random_rank()
     elif opt_rank == 'chemical_formulas':
-        pids, scores = chemical_formulas_rank(opt_smiles_input)
+        pids, scores = chemical_formulas_rank(input_SMILES=opt_smiles_input)
     else:
         raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
 
