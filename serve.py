@@ -210,12 +210,7 @@ def chemical_formulas_rank(input_SMILES: str = ''):
     
     #TODO
     # pids, scores = find_top_papers(client)
-    
     # return pids, scores
-    
-    print("Top 50 Papers with Most Similar SMILES:")
-    for paper_id, score in top_papers:
-        print(f"Paper ID: {paper_id}, Similarity Score: {score}")
     
     return random_rank()
 
