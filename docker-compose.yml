@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  pgsql:
+    image: 'postgres:17'
+    container_name: pgsql
+    ports:
+      - '${FORWARD_DB_PORT:-5432}:5432'
+    environment:
+      PGPASSWORD: '${DB_PASSWORD:-secret}'
+      POSTGRES_DB: '${DB_DATABASE}'
+      POSTGRES_USER: '${DB_USERNAME}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+    volumes:
+      - 'sail-pgsql:/var/lib/postgresql/data'
+      - './docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
+    networks:
+      - sail
+
+  milvus:
+    image: bitnami/milvus:latest
+
+    container_name: milvus
+    environment:
+      - MILVUS_ROOT_USER=${MILVUS_ROOT_USER:-root}
+      - MILVUS_ROOT_PASSWORD=${MILVUS_ROOT_PASSWORD:-secret}
+    ports:
+      - '${FORWARD_MILVUS_PORT:-19530}:19530'
+    volumes:
+      - 'milvus-data:/var/lib/milvus'
+    networks:
+      - sail
+
+networks:
+  sail:
+    driver: bridge
+
+volumes:
+  sail-pgsql:
+    driver: local
+  milvus-data:
+    driver: local

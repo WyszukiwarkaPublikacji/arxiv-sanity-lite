@@ -8,3 +8,4 @@ secret_key.txt
 .venv
 venv
 .python-version
+.env
