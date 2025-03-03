@@ -13,3 +13,4 @@ sqlitedict==1.7.0
 threadpoolctl==3.5.0
 Werkzeug==2.3.8
 pymilvus==2.5.4
+tqdm
