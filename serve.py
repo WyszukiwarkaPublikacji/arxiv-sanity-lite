@@ -15,13 +15,13 @@ from random import shuffle
 import numpy as np
 from sklearn import svm
 
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify
 from flask import render_template
 from flask import g # global session-level object
 from flask import session
-
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
+from aslite.evaluator import Evaluator
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -501,3 +501,15 @@ def register_email():
                 edb[g.user] = email
 
     return redirect(url_for('profile'))
+
+
+
+
+@app.route('/evaluate', methods=['POST'])
+def evaluate():
+    data = request.json
+    test_data = data['test_data']
+    k = data['k']
+    evaluator = Evaluator(test_data, k)
+    results = evaluator.evaluate()
+    return jsonify(results)
