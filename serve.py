@@ -92,7 +92,7 @@ def render_pid(pid):
     d = pdb[pid]
     return dict(
         weight = 0.0,
-        id = d['_id'],
+        url = d['url'],
         title = d['title'],
         time = d['_time_str'],
         authors = ', '.join(a['name'] for a in d['authors']),

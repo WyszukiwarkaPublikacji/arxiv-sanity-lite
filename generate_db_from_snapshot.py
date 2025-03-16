@@ -38,7 +38,7 @@ if __name__ == "__main__":
         enc["_idv"] = js["id"] + js["versions"][-1]["version"]
         enc["_id"] = js["id"]
         enc["_version"] = js["versions"][-1]["version"]
-        enc["id"] = "http://arxiv.org/abs/" + enc["_idv"]
+        enc["url"] = "http://arxiv.org/abs/" + enc["_idv"]
         enc["_time"] = time.mktime(time.strptime(js["update_date"], "%Y-%M-%d"))
         enc["_time_str"] = time.strftime(
             "%b %d %Y", time.strptime(js["update_date"], "%Y-%M-%d")
@@ -51,5 +51,7 @@ if __name__ == "__main__":
         enc["arxiv-comment"] = js["comments"]
         enc["arxiv_primary_category"] = js["categories"].split()[0]
         enc["tags"] = [{"term": i} for i in js["categories"].split(" ")]
+        enc["doi"] = js["doi"]
+        enc["provider"] = "arxiv"
         pdb[enc["_id"]] = enc
         mdb[enc["_id"]] = {"_time": enc["_time"]}
