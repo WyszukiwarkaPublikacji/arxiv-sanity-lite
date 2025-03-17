@@ -128,6 +128,6 @@ if __name__ == "__main__":
                             "Couldnt convert smiles to fingerprint, or something is wrong with the db",
                             smiles_i,
                         )
-            except HTTPError as err:
+            except requests.exceptions.HTTPError as err:
                 print("couldn't download paper", i, err)
     embedding_db.close()
