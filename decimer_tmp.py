@@ -102,29 +102,32 @@ if __name__ == "__main__":
     pdb = get_papers_db(flag="c")
     for i in pdb:
         if pdb[i]["provider"] == "chemrxiv":  # maybe one day find a better criteria
-            smiles, confidence = process_paper(i, "chemrxiv")
-            for smiles_i, confidence_i in zip(smiles, confidence):
-                print(smiles_i, confidence_i)
-                try:
-                    fp = AtomPairFingerprint(config.chemical_embedding_size).transform(
-                        [smiles_i]
-                    )
-                    structure = [
-                        {
-                            "chemical_embedding": fp,
+            try:
+                smiles, confidence = process_paper(i, "chemrxiv")
+                for smiles_i, confidence_i in zip(smiles, confidence):
+                    print(smiles_i, confidence_i)
+                    try:
+                        fp = AtomPairFingerprint(config.chemical_embedding_size).transform(
+                            [smiles_i]
+                        )
+                        structure = [
+                            {
+                                "chemical_embedding": fp,
                             "tags": [j["term"] for j in pdb[i]["tags"]],
                             "category": "chemistry",
                             "paper_id": i,
                             "SMILES": smiles_i,
-                        }
-                    ]
-                    embedding_db.insert(
-                        collection_name="chemical_embeddings", data=structure
-                    )
-                    print("Added smiles to db:", smiles_i)
-                except ValueError:
-                    print(
-                        "Couldnt convert smiles to fingerprint, or something is wrong with the db",
-                        smiles_i,
-                    )
+                            }
+                        ]
+                        embedding_db.insert(
+                            collection_name="chemical_embeddings", data=structure
+                        )
+                        print("Added smiles to db:", smiles_i, confidence_i)
+                    except ValueError:
+                        print(
+                            "Couldnt convert smiles to fingerprint, or something is wrong with the db",
+                            smiles_i,
+                        )
+            except HTTPError as err:
+                print("couldn't download paper", i, err)
     embedding_db.close()
