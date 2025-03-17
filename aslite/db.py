@@ -135,7 +135,7 @@ def setup_chemical_embeddings_collection(client : MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
     schema.add_field(field_name="chemical_embedding", datatype=DataType.BINARY_VECTOR, dim=config.chemical_embedding_size)
-    schema.add_field(field_name="paper_id", datatype=DataType.INT64)
+    schema.add_field(field_name="paper_id", datatype=DataType.VARCHAR, max_length=65535)
     schema.add_field(field_name="category", datatype=DataType.VARCHAR, max_length=127)
     schema.add_field(field_name="SMILES", datatype=DataType.VARCHAR, max_length=65535)
     schema.add_field(field_name="tags",datatype=DataType.ARRAY, element_type=DataType.VARCHAR, max_capacity=100, max_length=127)

@@ -5,7 +5,7 @@ itsdangerous==2.2.0
 Jinja2==3.1.5
 joblib==1.4.2
 MarkupSafe==3.0.2
-numpy==2.2.3 
+numpy
 scikit-learn==1.6.1
 Scipy==1.15.2 
 Sgmllib3k==1.0.0
@@ -18,3 +18,4 @@ decimer==2.7.1
 decimer-segmentation==1.4.0
 pdf2image==1.17.0
 rdkit==2022.9.5
+scikit-fingerprints
