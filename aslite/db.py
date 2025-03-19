@@ -10,6 +10,7 @@ from sqlitedict import SqliteDict
 from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
+from typing import Self
 
 # -----------------------------------------------------------------------------
 # global configuration
@@ -130,8 +131,8 @@ def get_email_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     edb = SqliteDict(DICT_DB_FILE, tablename='email', flag=flag, autocommit=autocommit)
     return edb
-def setup_chemical_embeddings_collection(client : MilvusClient):
-    
+
+def setup_chemical_embeddings_collection(client: MilvusClient):    
     schema = MilvusClient.create_schema(auto_id=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
     schema.add_field(field_name="chemical_embedding", datatype=DataType.BINARY_VECTOR, dim=config.chemical_embedding_size)
@@ -147,6 +148,7 @@ def setup_chemical_embeddings_collection(client : MilvusClient):
         index_params=index_params,
         consistency_level=config.consistency_level
     )
+
 def get_embeddings_db():
     client = MilvusClient(EMBEDDING_DB_FILE)
     if not client.has_collection("chemical_embeddings"):
@@ -154,9 +156,17 @@ def get_embeddings_db():
     return client
 
 
-    
-    
-    
+class EmbeddingsDB:
+    def __init__(self) -> MilvusClient:
+        self.client = get_embeddings_db()
+
+    def __enter__(self) -> Self:
+        return self.client
+
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+        self.client.close()
+
+
 # -----------------------------------------------------------------------------
 """
 our "feature store" is currently just a pickle file, may want to consider hdf5 in the future

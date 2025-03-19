@@ -11,8 +11,9 @@ import decimer_segmentation  # Debian: apt install libgl1
 import DECIMER
 import rdkit.Chem
 from skfp.fingerprints import AtomPairFingerprint
-from aslite.db import *
+from aslite.db import EmbeddingsDB, get_papers_db
 from aslite import config
+from pymilvus import MilvusClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,7 +36,7 @@ def get_pdf_url(id_: str, source: str = "arxiv") -> str:
 
 
 def download_pdf_as_images(url: str) -> list[np.ndarray]:
-    #! Warning: the whole paper is downloaded to RAM (TODO: check if it's really a problem at scale).
+    # Warning: the whole paper is downloaded to RAM (TODO: check if it's really a problem at scale).
     r = requests.get(url)
     r.raise_for_status()
     images = pdf2image.convert_from_bytes(r.content)
@@ -64,70 +65,62 @@ def predict_smiles(
     return smiles, confidence
 
 
-def process_paper(id_: str, source: str, confidence_threshold: float = 0.0):
+def calculate_embedding(smiles: str) -> np.ndarray:
+    return AtomPairFingerprint(config.chemical_embedding_size).transform([smiles])
+
+
+def process_paper(paper: dict, confidence_threshold: float = 0.0, embedding_db: MilvusClient | None = None) -> None:
+    id_, source = paper["_id"], paper["provider"]
+
     logging.info("Paper %s/%s: downloading" % (source, id_))
-    url = get_pdf_url(id_, source)
+    url = get_pdf_url(id_=id_, source=source)
     imgs = download_pdf_as_images(url)
 
     detected = []
     for idx, img in enumerate(imgs):
-        logging.info(
-            "Paper %s/%s: detecting structures on page %d/%d"
-            % (source, id_, idx + 1, len(imgs))
-        )
+        logging.info("Paper %s/%s: detecting structures on page %d/%d" % (source, id_, idx + 1, len(imgs)))
         detected += detect_chemical_structures(img)
 
     smiles = []
     confidence = []
     for idx, img in enumerate(detected):
-        logging.info(
-            "Paper %s/%s: extracting SMILES from detected structure %d/%d"
-            % (source, id_, idx + 1, len(detected))
-        )
+        logging.info("Paper %s/%s: extracting SMILES from detected structure %d/%d" % (source, id_, idx + 1, len(detected)))
+
         smiles_i, confidence_i = predict_smiles(img)
         if confidence_i < confidence_threshold:
             continue
-        smiles.append(smiles_i)
-        confidence.append(confidence_i)
 
-    # TODO: write the result directly to the vector DB
+        emb = calculate_embedding(smiles_i)  # TODO: try ValueError: couldnt convert smiles to fingerprint
+        embedding_db.insert(
+            collection_name="chemical_embeddings",
+            data=[
+                {
+                    "chemical_embedding": emb,
+                    "tags": [j["term"] for j in paper["tags"]],
+                    "category": "chemistry",
+                    "paper_id": id_,
+                    "SMILES": smiles_i,
+                }
+            ],
+        )
+        logging.info("Paper %s/%s: added embedding to the DB: %f %s" % (source, id_, confidence_i, smiles_i))
 
-    return smiles, confidence
+    logging.info("Paper %s/%s: finished processing." % (source, id_))
 
+
+def start_processing():
+    # TODO: run the processing for multiple papers in parallel
+    logging.info("Started processing")
+
+    pdb = get_papers_db(flag="c")
+    with EmbeddingsDB() as embedding_db:
+        for id_ in pdb:
+            if pdb[id_]["provider"] != "chemrxiv":  # TODO: find a better criterion?
+                continue
+            try:
+                process_paper(paper=pdb[id_], embedding_db=embedding_db)
+            except Exception as err:
+                logging.error("Paper %s/%s: processing failed: %s" % (pdb[id_]["provider"], id_, repr(err)))
 
 if __name__ == "__main__":
-    # TODO: get paper IDs to process from the DB
-    # TODO: run the processing for multiple papers in parallel
-    embedding_db: MilvusClient = get_embeddings_db()
-    pdb = get_papers_db(flag="c")
-    for i in pdb:
-        if pdb[i]["provider"] == "chemrxiv":  # maybe one day find a better criteria
-            try:
-                smiles, confidence = process_paper(i, "chemrxiv")
-                for smiles_i, confidence_i in zip(smiles, confidence):
-                    print(smiles_i, confidence_i)
-                    try:
-                        fp = AtomPairFingerprint(config.chemical_embedding_size).transform(
-                            [smiles_i]
-                        )
-                        structure = [
-                            {
-                                "chemical_embedding": fp,
-                            "tags": [j["term"] for j in pdb[i]["tags"]],
-                            "category": "chemistry",
-                            "paper_id": i,
-                            "SMILES": smiles_i,
-                            }
-                        ]
-                        embedding_db.insert(
-                            collection_name="chemical_embeddings", data=structure
-                        )
-                        print("Added smiles to db:", smiles_i, confidence_i)
-                    except ValueError:
-                        print(
-                            "Couldnt convert smiles to fingerprint, or something is wrong with the db",
-                            smiles_i,
-                        )
-            except requests.exceptions.HTTPError as err:
-                print("couldn't download paper", i, err)
-    embedding_db.close()
+    start_processing()

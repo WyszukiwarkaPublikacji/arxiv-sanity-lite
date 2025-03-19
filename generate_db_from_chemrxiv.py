@@ -1,4 +1,4 @@
-# The file to generate the db from is avabile at: https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io/blob/master/data/allchemrxiv_data.json.bz2
+# The file to generate the db from is avabile at: https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io/raw/refs/heads/master/data/allchemrxiv_data.json.bz2
 
 import argparse
 import json
@@ -17,9 +17,8 @@ if __name__ == "__main__":
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
     parser = argparse.ArgumentParser(description="Arxiv DB generator")
-    parser.add_argument("-f", "--file", type=str, help="The file to generate db from")
+    parser.add_argument("-f", "--file", type=str, required=True, help="The file to generate db from")
     args = parser.parse_args()
-    print(args)
     pdb = get_papers_db(flag="c")
     mdb = get_metas_db(flag="c")
     prevn = len(pdb)
@@ -28,8 +27,8 @@ if __name__ == "__main__":
         pdb[p["_id"]] = p
         mdb[p["_id"]] = {"_time": p["_time"]}
 
-    f = open(args.file, "r")
-    jsn = json.load(f)
+    with open(args.file, "r") as f:
+        jsn = json.load(f)
     for paperid in tqdm(jsn):
         paper = jsn[paperid]
         if not paper["isLatestVersion"]:
