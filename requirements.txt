@@ -1,6 +1,6 @@
 click==8.1.8
 feedparser==6.0.8
-Flask==2.0.2
+Flask==2.3.3
 itsdangerous==2.2.0
 Jinja2==3.1.5
 joblib==1.4.2
@@ -14,3 +14,5 @@ threadpoolctl==3.5.0
 Werkzeug==2.3.8
 pymilvus==2.5.4
 psycopg2-binary==2.9.10
+Flask-SQLAlchemy==2.3.0
+SQLAlchemy==2.0.16
