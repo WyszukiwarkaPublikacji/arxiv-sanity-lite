@@ -9,3 +9,5 @@ secret_key.txt
 venv
 .python-version
 .env
+.volumes
+volumes
