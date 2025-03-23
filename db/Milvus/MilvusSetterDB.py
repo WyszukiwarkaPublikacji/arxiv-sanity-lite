@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pymilvus import utility, FieldSchema, CollectionSchema, DataType, Collection
+from pymilvus import utility, FieldSchema, CollectionSchema, DataType, Collection, Index
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 os.chdir(ROOT_DIR)
@@ -16,7 +16,6 @@ class MilvusSetterDB:
     @staticmethod
     def create_collection_similar_publications() -> bool:
         try:
-            # Define the fields schema for the collection
             fields = [
                 FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=False),
                 FieldSchema(name="publication_embedding", dtype=DataType.FLOAT_VECTOR, dim=128),
@@ -25,21 +24,23 @@ class MilvusSetterDB:
                 FieldSchema(name="tags", dtype=DataType.VARCHAR, max_length=1024),
             ]
 
-            # Connect to the Milvus instance
             MilvusInstance.connect_to_instance()
 
-            # Check if the collection already exists
             if utility.has_collection(MilvusSetterDB.COLLECTION_NAME):
                 print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' already exists.")
-                return True  # Return True if collection exists
+                return True
 
-            # Create collection schema
             schema = CollectionSchema(fields, description="Similar Publications Collection")
-
-            # Create the collection
             collection = Collection(name=MilvusSetterDB.COLLECTION_NAME, schema=schema)
 
-            print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' created successfully!")
+            index_params = {
+                "metric_type": "L2",
+                "index_type": "IVF_FLAT"
+            }
+
+            collection.create_index(field_name="publication_embedding", index_params=index_params)
+
+            print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' created successfully with an index!")
             return True
 
         except Exception as e:
