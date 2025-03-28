@@ -64,6 +64,7 @@ def parse_response(response):
         del j['summary_detail']
         del j['title_detail']
         out.append(j)
+
     return out
 
 def filter_latest_version(idvs):
