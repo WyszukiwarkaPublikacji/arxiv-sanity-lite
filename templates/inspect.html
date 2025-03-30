@@ -9,13 +9,44 @@ var words_desc = {{ words_desc | tojson }};
 {% endblock %}
 
 {% block content %}
-<div id="wrap">
-</div>
-<div id="wordwrap">
-</div>
-{% endblock %}
 
-{% block elements %}
-<script src="{{ url_for('static', filename='paper_detail.js') }}" type="text/babel"></script>
-<script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
+
+<main class="main-container">
+    <section class="article-section">
+        <div class="article-header">
+            <h1>{{ paper.title }}</h1>
+            <a href="#" class="pdf-download">Pobierz jako PDF</a>
+        </div>
+        <p>{{ paper.summary }}</p>
+    </section>
+
+    <aside class="sidebar-section">
+        <div class="author-box">
+            <h2>{{ paper.authors }}</h2>
+            <div class="date">{{ paper.time }}</div>
+            <h3>Abstrakt artykułu</h3>
+            <p>{{ paper.summary }}</p>
+            <div class="tags">
+                {% for tag in paper.tags.split(', ') %}
+                    <span class="tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="related-articles">
+            <h3>Podobne artykuły</h3>
+            {% for sim_paper in similar_papers %}
+            <div class="related-card">
+                <h4>{{ sim_paper.title }}</h4>
+                <p>Autorzy: {{ sim_paper.authors }}</p>
+                <div class="tags">
+                    {% for tag in sim_paper.tags.split(', ') %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+</main>
 {% endblock %}

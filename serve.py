@@ -335,10 +335,17 @@ def inspect():
 
     # package everything up and render
     paper = render_pid(pid)
+
+    # Random papers set as similar papers, for now
+    similar_pids, _ = time_rank()
+    similar_pids = [spid for spid in similar_pids if spid != pid][:4]
+    similar_papers = [render_pid(spid) for spid in similar_pids]
+
     context = default_context()
     context['paper'] = paper
     context['words'] = words
     context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector. This is the actual summary that feeds into the SVM to power recommendations, so hopefully it is good and representative!"
+    context['similar_papers'] = similar_papers
     return render_template('inspect.html', **context)
 
 @app.route('/profile')
