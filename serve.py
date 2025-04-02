@@ -191,6 +191,7 @@ def search_rank(q: str = ''):
     scores = [p[0] for p in pairs]
     return pids, scores
 
+<<<<<<< Updated upstream
 import numpy as np
 from collections import defaultdict
 
@@ -218,8 +219,23 @@ def convert_bool_list_to_bytes(bool_list):
     return bytes([int(b) for b in bool_list])
 
 def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
+=======
+def chemical_formulas_rank(input_SMILES: str = ''):
+    
+    print(f"Input of SMILES: {input_SMILES}")
+    
+    #TODO 
+    #! 1. Get SMILES-es from milvus database
+    #! 2. Compare them with input_SMILES
+    #! 3. Return pids and scores of ranking sorted by similarity
+    
+    #? Remember that in a single paper there are more than one SMILES, so we need to compare all of them
+    #? and return for each paper the score of most similar SMILES
+    
+>>>>>>> Stashed changes
     client = get_embeddings_db()
-    if not client.has_collection("chemical_embeddings"):
+    collection_name = "chemical_embeddings"
+    if not client.has_collection(collection_name):
         raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
 
     # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
@@ -261,7 +277,21 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     sorted_results = sorted(paper_scores.items(), key=lambda x: x[1], reverse=True)
     pids, scores = zip(*sorted_results) if sorted_results else ([], [])
     
+<<<<<<< Updated upstream
     print(len(list(pids)))
+=======
+    client.load_collection(collection_name)
+
+    # results = client.query(
+    #     collection_name=collection_name,
+    #     output_fields=["paper_id", "SMILES"],
+    #     expr=""  # Empty expression means fetch all records
+    # )
+    
+    #TODO
+    #* pids, scores = find_top_papers(client)
+    #* return pids, scores
+>>>>>>> Stashed changes
     
     return list(pids), list(scores)
 
@@ -570,3 +600,7 @@ def register_email():
                 edb[g.user] = email
 
     return redirect(url_for('profile'))
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

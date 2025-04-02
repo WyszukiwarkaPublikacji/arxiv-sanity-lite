@@ -24,6 +24,12 @@ else
 fi
 ```
 
+Milvus setup:
+```bash
+docker compose run -d
+```
+
+
 You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`, and then running `compute.py` to compute the tfidf features of the papers. Finally to serve the flask server locally we'd run something like:
 
 ```bash

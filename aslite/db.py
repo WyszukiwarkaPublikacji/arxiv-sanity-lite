@@ -11,6 +11,17 @@ from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
 
+# ##### TEMPORARY ################################## 
+
+from pymilvus import connections
+try:
+    connections.connect(host="localhost", port="19530")
+    print("Milvus connected successfully!")
+except Exception as e:
+    raise Exception("Cannot connect to Milvus on localhost. Check if you run docker conatiner properly: %s" % e)
+
+# ##################################################
+
 # -----------------------------------------------------------------------------
 # global configuration
 
@@ -149,7 +160,7 @@ def setup_chemical_embeddings_collection(client: MilvusClient):
     )
 
 def get_embeddings_db():
-    client = MilvusClient(EMBEDDING_DB_FILE)
+    client = MilvusClient("http://localhost:19530") # EMBEDDINGS_DB
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)
     return client
