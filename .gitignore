@@ -8,8 +8,5 @@ secret_key.txt
 .venv
 venv
 .python-version
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 volumes

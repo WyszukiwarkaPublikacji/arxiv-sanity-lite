@@ -23,6 +23,17 @@ from flask import session
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db, get_embeddings_db
 from aslite.db import load_features
 
+import numpy as np
+from collections import defaultdict
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
+from random import shuffle
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
+from random import shuffle
+
 # -----------------------------------------------------------------------------
 # inits and globals
 
@@ -234,6 +245,8 @@ def chemical_formulas_rank(input_SMILES: str = ''):
     
 >>>>>>> Stashed changes
     client = get_embeddings_db()
+    collection_name = "chemical_embeddings"
+    if not client.has_collection(collection_name):
     collection_name = "chemical_embeddings"
     if not client.has_collection(collection_name):
         raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
@@ -601,6 +614,9 @@ def register_email():
 
     return redirect(url_for('profile'))
 
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
