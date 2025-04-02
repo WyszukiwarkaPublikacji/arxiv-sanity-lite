@@ -92,7 +92,7 @@ def render_pid(pid):
     d = pdb[pid]
     return dict(
         weight = 0.0,
-        url = d['url'],
+        # url = d['url'],
         title = d['title'],
         time = d['_time_str'],
         authors = ', '.join(a['name'] for a in d['authors']),
@@ -194,25 +194,77 @@ def search_rank(q: str = ''):
 import numpy as np
 from collections import defaultdict
 
-def chemical_formulas_rank(input_SMILES: str = ''):
-    
-    #TODO 
-    #* 1. Get SMILES-es from milvus database
-    #* 2. Compare them with input_SMILES
-    #* 3. Return pids and scores of ranking sorted by similarity
-    
-    #? Remember that in a single paper there are more than one SMILES, so we need to compare all of them
-    #? and return for each paper the score of most similar SMILES
-    
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
+from random import shuffle
+
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem
+from random import shuffle
+
+# Convert a SMILES string into an RDKit fingerprint.
+def smiles_to_fp(smiles: str):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    return AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=256)
+
+# Helper function to convert a list of booleans (or 0/1 integers) to bytes.
+# (Assumes that such a conversion is needed by your Milvus client.)
+def convert_bool_list_to_bytes(bool_list):
+    # This is a placeholder conversion function.
+    # In your actual implementation, use the proper conversion as required.
+    # For example, you might pack the booleans into a bytearray.
+    return bytes([int(b) for b in bool_list])
+
+def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     client = get_embeddings_db()
     if not client.has_collection("chemical_embeddings"):
         raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
+
+    # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
+    input_fp = smiles_to_fp(input_SMILES)
+    if input_fp is None:
+        raise ValueError("Invalid input SMILES string.")
+
+    # RDKit's ExplicitBitVect is iterable and yields 0/1 values.
+    bool_list = [bool(bit) for bit in input_fp]
+    query_vector = convert_bool_list_to_bytes(bool_list)
+
+    # Run a Milvus search query using the binary vector.
+    # Adjust the search "limit" as needed to capture enough SMILES entries for each paper.
+    search_results = client.search(
+        collection_name="chemical_embeddings",
+        data=[query_vector],
+        limit=limit,
+        anns_field="chemical_embedding",
+        filter="",  # If you want to restrict the search, add your filter here.
+        search_params={"metric_type": "JACCARD"}
+    )
+
+    # Milvus returns a list (one per query vector) of hits. Each hit typically includes the field values and a score.
+    # Note: When using JACCARD in Milvus, the score is a distance so lower values mean better matches.
+    # We convert this to a similarity by computing: similarity = 1 - distance.
+    paper_scores = {}
+    # Iterate over the hits for our single query.
+    for hit in search_results[0]:
+        print(hit)
+        # Assume each hit.entity is a dictionary containing "paper_id" and "SMILES".
+        paper_id = str(hit['id'])
+        # Convert distance to similarity.
+        similarity = 1 - hit['distance']
+        # For each paper, keep the maximum similarity encountered.
+        if paper_id not in paper_scores or paper_scores[paper_id] < similarity:
+            paper_scores[paper_id] = similarity
+
+    # Sort the papers by similarity score (highest similarity first)
+    sorted_results = sorted(paper_scores.items(), key=lambda x: x[1], reverse=True)
+    pids, scores = zip(*sorted_results) if sorted_results else ([], [])
     
-    #TODO
-    # pids, scores = find_top_papers(client)
-    # return pids, scores
+    print(len(list(pids)))
     
-    return random_rank()
+    return list(pids), list(scores)
+
 
 # -----------------------------------------------------------------------------
 # primary application endpoints

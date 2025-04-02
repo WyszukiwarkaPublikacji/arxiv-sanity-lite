@@ -10,7 +10,6 @@ from sqlitedict import SqliteDict
 from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
-from typing import Self
 
 # -----------------------------------------------------------------------------
 # global configuration
@@ -106,7 +105,7 @@ flag='r': open for read-only
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
-EMBEDDING_DB_FILE = os.path.join(DATA_DIR, 'embeddings.db') #NOTE: once we set it up with docker it will probably need to be a standalone db
+EMBEDDING_DB_FILE = "http://localhost:19530/" # os.path.join(DATA_DIR, 'embeddings.db') #NOTE: once we set it up with docker it will probably need to be a standalone db
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     pdb = CompressedSqliteDict(PAPERS_DB_FILE, tablename='papers', flag=flag, autocommit=autocommit)
@@ -160,7 +159,7 @@ class EmbeddingsDB:
     def __init__(self) -> MilvusClient:
         self.client = get_embeddings_db()
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> MilvusClient:
         return self.client
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
