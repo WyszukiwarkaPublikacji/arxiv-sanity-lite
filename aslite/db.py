@@ -11,17 +11,6 @@ from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
 
-# ##### TEMPORARY ################################## 
-
-from pymilvus import connections
-try:
-    connections.connect(host="localhost", port="19530")
-    print("Milvus connected successfully!")
-except Exception as e:
-    raise Exception("Cannot connect to Milvus on localhost. Check if you run docker conatiner properly: %s" % e)
-
-# ##################################################
-
 # -----------------------------------------------------------------------------
 # global configuration
 
@@ -112,11 +101,13 @@ flag='c': default mode, open for read/write, and creating the db/table if necess
 flag='r': open for read-only
 """
 
+MILVUS_MODE = os.getenv("MILVUS_MODE", "lite")
+
 # stores info about papers, and also their lighter-weight metadata
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
-EMBEDDING_DB_FILE = "http://localhost:19530/" # os.path.join(DATA_DIR, 'embeddings.db') #NOTE: once we set it up with docker it will probably need to be a standalone db
+EMBEDDING_DB_FILE = "http://localhost:19530/" if MILVUS_MODE=="standalone" else os.path.join(DATA_DIR, 'embeddings.db')
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     pdb = CompressedSqliteDict(PAPERS_DB_FILE, tablename='papers', flag=flag, autocommit=autocommit)
