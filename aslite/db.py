@@ -151,7 +151,7 @@ def setup_chemical_embeddings_collection(client: MilvusClient):
     )
 
 def get_embeddings_db():
-    client = MilvusClient("http://localhost:19530") # EMBEDDINGS_DB
+    client = MilvusClient(EMBEDDING_DB_FILE) # EMBEDDINGS_DB
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)
     return client
