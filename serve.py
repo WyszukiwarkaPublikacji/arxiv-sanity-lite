@@ -13,26 +13,13 @@ import time
 from random import shuffle
 
 import numpy as np
+from flask import g  # global session-level object
+from flask import Flask, redirect, render_template, request, session, url_for
+from rdkit import Chem
 from sklearn import svm
 
-from flask import Flask, request, redirect, url_for
-from flask import render_template
-from flask import g # global session-level object
-from flask import session
-
-from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db, get_embeddings_db
-from aslite.db import load_features
-
-import numpy as np
-from collections import defaultdict
-
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem
-from random import shuffle
-
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem
-from random import shuffle
+from aslite.db import (get_email_db, get_embeddings_db, get_last_active_db,
+                       get_metas_db, get_papers_db, get_tags_db, load_features)
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -103,7 +90,6 @@ def render_pid(pid):
     d = pdb[pid]
     return dict(
         weight = 0.0,
-        # url = d['url'],
         title = d['title'],
         time = d['_time_str'],
         authors = ', '.join(a['name'] for a in d['authors']),
@@ -202,23 +188,12 @@ def search_rank(q: str = ''):
     scores = [p[0] for p in pairs]
     return pids, scores
 
-import numpy as np
-from collections import defaultdict
-
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem
-from random import shuffle
-
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem
-from random import shuffle
-
 # Convert a SMILES string into an RDKit fingerprint.
 def smiles_to_fp(smiles: str):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
-    return AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=256)
+    return Chem.AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=256)
 
 # Helper function to convert a list of booleans (or 0/1 integers) to bytes.
 # (Assumes that such a conversion is needed by your Milvus client.)
@@ -260,7 +235,6 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     paper_scores = {}
     # Iterate over the hits for our single query.
     for hit in search_results[0]:
-        print(hit)
         # Assume each hit.entity is a dictionary containing "paper_id" and "SMILES".
         paper_id = str(hit['id'])
         # Convert distance to similarity.
@@ -581,9 +555,6 @@ def register_email():
 
     return redirect(url_for('profile'))
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 if __name__ == "__main__":
     app.run(debug=True)

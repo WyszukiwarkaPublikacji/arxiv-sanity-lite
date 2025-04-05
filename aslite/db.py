@@ -107,7 +107,7 @@ MILVUS_MODE = os.getenv("MILVUS_MODE", "lite")
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
-EMBEDDING_DB_FILE = "http://localhost:19530/" if MILVUS_MODE=="standalone" else os.path.join(DATA_DIR, 'embeddings.db')
+EMBEDDING_DB_FILE = "http://localhost:19530/" if MILVUS_MODE == "standalone" else os.path.join(DATA_DIR, 'embeddings.db')
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     pdb = CompressedSqliteDict(PAPERS_DB_FILE, tablename='papers', flag=flag, autocommit=autocommit)

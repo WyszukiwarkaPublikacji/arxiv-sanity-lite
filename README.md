@@ -36,11 +36,11 @@ On Windows sometimes it is better to run this line before:
 ```bash
 $env:FLASK_APP="serve.py"
 ```
-Also, if you want to use milvus stanadlone hosted on http://localhost:19530/ set:
+Also, if you want to use milvus standlone hosted on http://localhost:19530/ set:
 ```bash
 $env:MILVUS_MODE="standalone"
 ```
-Else it will try tu use milvus lite with database
+Otherwise it will try to use milvus lite with database stored locally.
 
 ```bash
 export FLASK_APP=serve.py; flask run
