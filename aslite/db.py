@@ -150,7 +150,7 @@ def setup_chemical_embeddings_collection(client : MilvusClient):
     
 def setup_image_embeddings_collection(client: MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
-    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True)
     schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=config.image_embedding_size)
     schema.add_field(field_name="paper_id", datatype=DataType.STRING)
     
