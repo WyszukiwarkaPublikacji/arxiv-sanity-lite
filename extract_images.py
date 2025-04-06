@@ -28,20 +28,19 @@ if __name__ == '__main__':
 
     update_ids = get_non_matching_ids(papers_db, ...)
     
-    # extract the figures from the records you will be adding
-    # and insert them into the images_db and milvus collection.
-    
-    for arxiv_id in update_ids:
-        # obtain primary key from images_db based on arxiv_id
-        image_id = ...
-        
+    for arxiv_id in update_ids:  
         link = [l['href'] for l in papers_db[id]['links'] if l['title'] == 'pdf'][0]
         pdf = download_pdf(link)
         
         figures, captions = zip(*extractor(pdf))
         
-        embeddings = vectorizer(figures, captions)
-        data = [{"id": image_id, "embedding": emb} for emb in embeddings]
+        # insert images to db and obtain primary keys based on arxiv_id
+        # question: are these ids ordered?
+        image_ids = ...
         
+        embeddings = vectorizer(figures, captions)
+        data = [{"id": id, "embedding": emb} for id, emb in zip(image_ids, embeddings)]
+        
+        client.delete("image_embeddings", image_ids)
         client.insert("image_embeddings", data)
         
