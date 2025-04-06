@@ -3,15 +3,15 @@ from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor
 
 
+IMAGE_MODEL = "all-MiniLM-L6-v2"
+CAPTION_MODEL = "openai/clip-vit-base-patch16"
+
+
 class FigureVectorizer:
     def __init__(self, device):
-        self.caption_vectorizer = SentenceTransformer("all-MiniLM-L6-v2", device=device)
-        self.image_processor = CLIPProcessor.from_pretrained(
-            "openai/clip-vit-base-patch16"
-        )
-        self.image_vectorizer = CLIPModel.from_pretrained(
-            "openai/clip-vit-base-patch16"
-        )
+        self.caption_vectorizer = SentenceTransformer(CAPTION_MODEL, device=device)
+        self.image_processor = CLIPProcessor.from_pretrained(IMAGE_MODEL)
+        self.image_vectorizer = CLIPModel.from_pretrained(IMAGE_MODEL)
         self.image_vectorizer.to(device)
 
         self.device = device

@@ -130,8 +130,8 @@ def get_email_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     edb = SqliteDict(DICT_DB_FILE, tablename='email', flag=flag, autocommit=autocommit)
     return edb
+
 def setup_chemical_embeddings_collection(client : MilvusClient):
-    
     schema = MilvusClient.create_schema(auto_id=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
     schema.add_field(field_name="chemical_embedding", datatype=DataType.BINARY_VECTOR, dim=config.chemical_embedding_size)
@@ -147,16 +147,35 @@ def setup_chemical_embeddings_collection(client : MilvusClient):
         index_params=index_params,
         consistency_level=config.consistency_level
     )
+    
+def setup_image_embeddings_collection(client: MilvusClient):
+    schema = MilvusClient.create_schema(auto_id=False)
+    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="embedding", datatype=DataType.FLOAT_VECTOR, dim=config.image_embedding_size)
+    schema.add_field(field_name="paper_id", datatype=DataType.STRING)
+    
+    index_params = client.prepare_index_params()
+    index_params.add_index(field_name="image_embedding", index_type=config.images_index_type, metric_type="IP") 
+    
+    client.create_collection(
+        collection_name="image_embeddings",
+        schema=schema,
+        index_params=index_params,
+        consistency_level=config.consistency_level
+    )
+    
+    
 def get_embeddings_db():
     client = MilvusClient(EMBEDDING_DB_FILE)
+    
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)
+        
+    if not client.has_collection("image_embeddings"):
+        setup_image_embeddings_collection(client)
+        
     return client
 
-
-    
-    
-    
 # -----------------------------------------------------------------------------
 """
 our "feature store" is currently just a pickle file, may want to consider hdf5 in the future
