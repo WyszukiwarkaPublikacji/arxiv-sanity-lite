@@ -9,28 +9,26 @@ I am running a live version of this code on [arxiv-sanity-lite.com](https://arxi
 
 #### To run
 
-To run this locally I usually run the following script to update the database with any new papers. I typically schedule this via a periodic cron job:
-
+First we need to download the papers, for arxiv we use snapshots from kaggle: [https://www.kaggle.com/datasets/Cornell-University/arxiv](https://www.kaggle.com/datasets/Cornell-University/arxiv),
+then we need to run a script to generate the db from it:
 ```bash
-#!/bin/bash
-
-python3 arxiv_daemon.py --num 2000
-
-if [ $? -eq 0 ]; then
-    echo "New papers detected! Running compute.py"
-    python3 compute.py
-else
-    echo "No new papers were added, skipping feature computation"
-fi
+python3 generate_db_from_snapshot.py -f arxiv-metadata-oai-snapshot.json
 ```
-
-Milvus setup:
+for chemrxiv we use snapshots from the [chemrxiv-dashboard](https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io) project, and run the respective script.
 ```bash
-docker compose run -d
+python3 generate_db_from_chemrxiv.py -f allchemrxiv_data.json
 ```
-
-
-You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`, and then running `compute.py` to compute the tfidf features of the papers. Finally to serve the flask server locally we'd run something like:
+We also need to extract SMILES from the papers(keep in mind it is an extremely long process that hasn't yet ever been fully completed).
+To do that we run the decimer.py script.
+```bash
+python3 decimer.py
+```
+However it only seems to work on older python versions. We had success running it on a dockerized debian 11.
+Additionally it requries poppler, which on debian based system can by installed by running
+```bash
+sudo apt install poppler-utils
+```
+Finally to serve the flask server locally we'd run something like:
 
 On Windows sometimes it is better to run this line before:
 ```bash
