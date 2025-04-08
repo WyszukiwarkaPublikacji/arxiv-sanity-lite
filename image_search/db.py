@@ -1,11 +1,9 @@
 import os
 from PIL import Image
-from sqlalchemy import Column, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import Column, ForeignKey, Integer, String, Text, create_engine, inspect
 from sqlalchemy.orm import declarative_base, sessionmaker
-
-from extract import FigureExtractor
-
-# Logging setup
+import sqlite3
+import json
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -13,12 +11,10 @@ logging.basicConfig(level=logging.INFO)
 # Database setup
 Base = declarative_base()
 
-
 class PublicationModel(Base):
-    __tablename__ = "publications"
-    paper_id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String, nullable=False)
-
+    __tablename__ = "papers"
+    key = Column(String, primary_key=True)
+    value = Column(Text, nullable=False)
 
 class ImageModel(Base):
     __tablename__ = "figures"
@@ -26,29 +22,57 @@ class ImageModel(Base):
     arxiv_id = Column(String(12), nullable=False)
     figure_path = Column(String, nullable=False)
     caption = Column(Integer, ForeignKey("captions.caption_id"), nullable=True)
-    paper_id = Column(Integer, ForeignKey("publications.paper_id"), nullable=False)
-
+    paper_id = Column(String, ForeignKey("papers.key"), nullable=False)
 
 class FigureModel(Base):
     __tablename__ = "captions"
     caption_id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(Text, nullable=True)
 
+data_dir = "data"
+os.makedirs(data_dir, exist_ok=True)
 
-DATABASE_URL = "sqlite:///image_db.db"
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-session = Session()
-Base.metadata.create_all(engine)
+papers_db_url = f"sqlite:///{os.path.join(data_dir, 'papers.db')}"
+images_db_url = f"sqlite:///{os.path.join(data_dir, 'images.db')}"
 
+papers_engine = create_engine(papers_db_url)
+images_engine = create_engine(images_db_url)
 
-def save_to_database(arxiv_id, figure_path, description=None, paper_id=None):
+def ensure_tables(engine, models):
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
+    for model in models:
+        if model.__tablename__ not in existing_tables:
+            logging.info(f"Creating table {model.__tablename__}")
+            Base.metadata.create_all(engine, tables=[model.__table__])
+
+# Ensure databases and tables
+ensure_tables(papers_engine, [PublicationModel])
+ensure_tables(images_engine, [ImageModel, FigureModel])
+
+PapersSession = sessionmaker(bind=papers_engine)
+ImagesSession = sessionmaker(bind=images_engine)
+papers_session = PapersSession()
+images_session = ImagesSession()
+
+# Export sessions and models for external usage
+__all__ = [
+    'papers_session', 'images_session', 'save_to_database',
+    'ImageModel', 'FigureModel', 'PublicationModel'
+]
+
+logging.info(
+    "Loaded db.py. Available sessions: 'papers_session' for papers.db, 'images_session' for images.db."
+)
+
+def save_to_database(session, arxiv_id, figure_path, description=None, paper_id=None):
+    """
+    Save image data to the `figures` table in `images.db`.
+    """
     try:
         caption_id = None
         if description:
-            caption = (
-                session.query(FigureModel).filter_by(description=description).first()
-            )
+            caption = session.query(FigureModel).filter_by(description=description).first()
             if not caption:
                 caption = FigureModel(description=description)
                 session.add(caption)
@@ -68,8 +92,10 @@ def save_to_database(arxiv_id, figure_path, description=None, paper_id=None):
         logging.error(f"Database error: {e}")
         session.rollback()
 
-
 def extract_and_store(extractor, pdf_path, paper_id):
+    """
+    Extract figures from a PDF and save them to disk and the database.
+    """
     arxiv_id = os.path.splitext(os.path.basename(pdf_path))[0]
     figures, captions = list(zip(*extractor(pdf_path, verbose=False)))
 
@@ -79,6 +105,12 @@ def extract_and_store(extractor, pdf_path, paper_id):
     for idx, (figure, caption) in enumerate(zip(figures, captions)):
         image_name = f"{arxiv_id}_figure{idx + 1}.png"
         image_path = os.path.join(extracted_dir, image_name)
-        Image.fromarray(figure).save(image_path)
 
-        save_to_database(arxiv_id, image_path, caption, paper_id)
+        # Save the figure to disk
+        try:
+            Image.fromarray(figure).save(image_path)
+        except Exception as e:
+            logging.error(f"Failed to save image for {arxiv_id}: {e}")
+            continue
+
+        save_to_database(images_session, arxiv_id, image_path, caption, paper_id)
