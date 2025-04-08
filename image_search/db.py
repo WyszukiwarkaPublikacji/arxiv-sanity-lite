@@ -35,7 +35,7 @@ class FigureModel(Base):
     description = Column(Text, nullable=True)
 
 
-DATABASE_URL = "sqlite:///database.db"
+DATABASE_URL = "sqlite:///image_db.db"
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
