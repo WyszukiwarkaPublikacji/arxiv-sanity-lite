@@ -1,10 +1,11 @@
 from image_search.extract import FigureExtractor
 from image_search.embedding import FigureVectorizer
-from aslite.db import get_embeddings_db, get_papers_db
+from aslite.db import get_embeddings_db, get_papers_db, get_metas_db
 
+import logging
+import torch
 import requests
 import io
-import db
 
 
 def download_pdf(url):
@@ -37,6 +38,7 @@ def get_non_matching_ids(papers_db, images_db) -> list[str]:
     # Iterate through arxiv_ids in the papers database
     for paper_id, metadata in papers_db.items():
         arxiv_id = metadata.get('arxiv_id')
+        print(arxiv_id)
         if not arxiv_id:
             continue
 
@@ -78,12 +80,16 @@ def delete_old_versions(images_db, arxiv_id):
 
 
 if __name__ == '__main__':
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    logging.basicConfig()
+    
     extractor = FigureExtractor()
-    vectorizer = FigureVectorizer(device="cuda")
+    vectorizer = FigureVectorizer(device)
 
     papers_db = get_papers_db(flag='r')
     client = get_embeddings_db()
-    images_db = db.get_metas_db(flag='c')
+    images_db = get_metas_db(flag='c')
 
     update_ids = get_non_matching_ids(papers_db, images_db)
 
@@ -91,13 +97,13 @@ if __name__ == '__main__':
     for arxiv_id in update_ids:
         delete_old_versions(images_db, arxiv_id)
 
-        link = #"https://arxiv.org/pdf/arxiv_id"
+        link = [l['href'] for l in papers_db[id]['links'] if l['title'] == 'pdf'][0]
         pdf = download_pdf(link)
 
         figures, captions = zip(*extractor(pdf))
 
         # Insert figures into the database and get image IDs
-        with db.get_metas_db(flag='c') as metas_db:
+        with get_metas_db(flag='c') as metas_db:
             image_ids = []
             for figure, caption in zip(figures, captions):
                 figure_id = metas_db.insert(figure, caption, arxiv_id=arxiv_id)

@@ -3,8 +3,8 @@ from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor
 
 
-IMAGE_MODEL = "all-MiniLM-L6-v2"
-CAPTION_MODEL = "openai/clip-vit-base-patch16"
+IMAGE_MODEL = "openai/clip-vit-base-patch16"
+CAPTION_MODEL = "all-MiniLM-L6-v2"
 
 
 class FigureVectorizer:
