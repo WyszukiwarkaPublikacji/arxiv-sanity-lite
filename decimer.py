@@ -9,8 +9,8 @@ import numpy as np
 import logging
 import decimer_segmentation  # Debian: apt install libgl1
 import DECIMER
+from aslite.fingerprint import calculate_embedding
 import rdkit.Chem
-from skfp.fingerprints import AtomPairFingerprint
 from aslite.db import EmbeddingsDB, get_papers_db
 from aslite import config
 from pymilvus import MilvusClient
@@ -64,14 +64,10 @@ def predict_smiles(
     confidence = np.mean(np.array([confidence for token, confidence in tokens]))
     return smiles, confidence
 
-
-def calculate_embedding(smiles: str) -> np.ndarray:
-    return AtomPairFingerprint(config.chemical_embedding_size).transform([smiles])
-
-
 def process_paper(paper: dict, confidence_threshold: float = 0.0, embedding_db: MilvusClient | None = None) -> None:
+    
     id_, source = paper["_id"], paper["provider"]
-
+    print(id_)
     logging.info("Paper %s/%s: downloading" % (source, id_))
     url = get_pdf_url(id_=id_, source=source)
     imgs = download_pdf_as_images(url)
