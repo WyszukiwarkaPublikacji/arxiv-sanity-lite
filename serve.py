@@ -17,7 +17,7 @@ from flask import g  # global session-level object
 from flask import Flask, redirect, render_template, request, session, url_for
 from rdkit import Chem
 from sklearn import svm
-
+from aslite.fingerprint import calculate_embedding
 from aslite.db import (get_email_db, get_embeddings_db, get_last_active_db,
                        get_metas_db, get_papers_db, get_tags_db, load_features)
 
@@ -187,21 +187,19 @@ def search_rank(q: str = ''):
     pids = [p[1] for p in pairs]
     scores = [p[0] for p in pairs]
     return pids, scores
-
-# Convert a SMILES string into an RDKit fingerprint.
-def smiles_to_fp(smiles: str):
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return None
-    return Chem.AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=256)
-
 # Helper function to convert a list of booleans (or 0/1 integers) to bytes.
 # (Assumes that such a conversion is needed by your Milvus client.)
 def convert_bool_list_to_bytes(bool_list):
-    # This is a placeholder conversion function.
-    # In your actual implementation, use the proper conversion as required.
-    # For example, you might pack the booleans into a bytearray.
-    return bytes([int(b) for b in bool_list])
+    if len(bool_list) % 8 != 0:
+        raise ValueError("The length of a boolean list must be a multiple of 8")
+
+    byte_array = bytearray(len(bool_list) // 8)
+    for i, bit in enumerate(bool_list):
+        if bit == 1:
+            index = i // 8
+            shift = i % 8
+            byte_array[index] |= (1 << shift)
+    return bytes(byte_array)
 
 def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     client = get_embeddings_db()
@@ -210,14 +208,16 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
         raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
 
     # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
-    input_fp = smiles_to_fp(input_SMILES)
+    input_fp = calculate_embedding(input_SMILES)
     if input_fp is None:
         raise ValueError("Invalid input SMILES string.")
-
+    print(input_SMILES)
     # RDKit's ExplicitBitVect is iterable and yields 0/1 values.
     bool_list = [bool(bit) for bit in input_fp]
+   
     query_vector = convert_bool_list_to_bytes(bool_list)
-
+    print(query_vector)
+    #query_vector = input_fp
     # Run a Milvus search query using the binary vector.
     # Adjust the search "limit" as needed to capture enough SMILES entries for each paper.
     search_results = client.search(
@@ -225,6 +225,7 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
         data=[query_vector],
         limit=limit,
         anns_field="chemical_embedding",
+        output_fields=["paper_id", "SMILES"],
         filter="",  # If you want to restrict the search, add your filter here.
         search_params={"metric_type": "JACCARD"}
     )
@@ -236,7 +237,8 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     # Iterate over the hits for our single query.
     for hit in search_results[0]:
         # Assume each hit.entity is a dictionary containing "paper_id" and "SMILES".
-        paper_id = str(hit['id'])
+        print(hit)
+        paper_id = str(hit['entity']['paper_id'])
         # Convert distance to similarity.
         similarity = 1 - hit['distance']
         # For each paper, keep the maximum similarity encountered.
@@ -246,7 +248,7 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     # Sort the papers by similarity score (highest similarity first)
     sorted_results = sorted(paper_scores.items(), key=lambda x: x[1], reverse=True)
     pids, scores = zip(*sorted_results) if sorted_results else ([], [])
-    
+    print(pids)
     return list(pids), list(scores)
 
 
