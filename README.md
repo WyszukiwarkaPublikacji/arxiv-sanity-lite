@@ -23,7 +23,7 @@ To do that we run the decimer.py script.
 ```bash
 python3 decimer.py
 ```
-However it only seems to work on older python versions. We had success running it on a dockerized debian 11.
+However it only seems to work on older python versions. We had success running it on a dockerized debian 11, or under uv.
 Additionally it requries poppler, which on debian based system can by installed by running
 ```bash
 sudo apt install poppler-utils
