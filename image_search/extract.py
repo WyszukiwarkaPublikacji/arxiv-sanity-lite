@@ -100,9 +100,10 @@ class FigureExtractor:
         # model = ultralytics.YOLO(engine_path)
         return model
 
-    def __call__(self, pdf_path, **kwargs):
+    def __call__(self, pdf, **kwargs):
         out = []
-        pdf = fitz.open(pdf_path)
+        
+        pdf = fitz.open(pdf) if isinstance(pdf, str) else fitz.open(stream=pdf)
 
         images = [render_page(p, dpi=100) for p in pdf]
         results = self.model.predict(images, **kwargs)
