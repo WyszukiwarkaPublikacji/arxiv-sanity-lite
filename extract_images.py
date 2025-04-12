@@ -1,131 +1,131 @@
-from image_search.extract import FigureExtractor
-from image_search.embedding import FigureVectorizer
-from aslite.db import get_embeddings_db, get_papers_db, CompressedSqliteDict, PAPERS_DB_FILE
-import logging
-import torch
-import os
-import requests
+import argparse
 import io
+import logging
+import os
+
+import requests
+import torch
 from PIL import Image
 
+from aslite.db import get_embeddings_db, get_images_db, get_papers_db
+from image_search.embedding import FigureVectorizer
+from image_search.extract import FigureExtractor
 
-def get_images_db(flag="r", autocommit=True):
-    assert flag in ["r", "c"]
-    pdb = CompressedSqliteDict(
-        PAPERS_DB_FILE, tablename="images", flag=flag, autocommit=autocommit
-    )
-    return pdb
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+EXTRACT_DIR = "extracted"
+
+os.makedirs(EXTRACT_DIR, exist_ok=True)
+
+PAPER_URL_TEMPL = "https://arxiv.org/pdf/%s.pdf"
 
 
-def fetch_paper(arxiv_id):
-    url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+def fetch_paper(aid):
+    url = PAPER_URL_TEMPL % aid
+    
     with requests.get(url) as r:
         r.raise_for_status()
         return io.BytesIO(r.content)
 
 
-def extract_base(arxiv_id) -> str:
-    return arxiv_id.split("v")[0]
-
-
-def extract_version(arxiv_id) -> int:
-    """
-    Extract the version suffix from an arxiv_id.
-    Returns 0 if no version suffix is present.
-    """
-    if "v" in arxiv_id:
-        version = arxiv_id.split("v")[-1]
-        return int(version) if version.isdigit() else 0
-    return 0
+def split_id(aid) -> tuple[str, int]:
+    aid = aid.split("v")
+    version = int(aid[-1]) if aid[-1].isdigit() else 0
+    return aid[0], version
 
 
 def get_non_matching_ids(papers_db, images_db) -> list[str]:
-    """
-    Find all arxiv_ids in papers.db that are either missing in images.db
-    or have a newer version available.
-    """
+    """Find all aids in papers.db that are either 
+    missing in images.db or have a newer version available."""
     non_matching_ids = set()
 
-    for arxiv_id in papers_db:
-        base_id = arxiv_id.split("v")[0]
-        matching_arxiv_id = False
+    for aid in papers_db:
+        base_id, _ = split_id(aid)
+        matching_aid = False
 
-        for img_id, info in images_db.items():
+        for info in images_db.values():
             if info["base_id"] == base_id:
-                matching_arxiv_id = True
-                if info["version"] < extract_version(arxiv_id):
-                    non_matching_ids.add(arxiv_id)
+                matching_aid = True
+                _, version = split_id(aid)
 
-        if not matching_arxiv_id:
-            non_matching_ids.add(arxiv_id)
+                if info["version"] < version:
+                    non_matching_ids.add(aid)
+
+        if not matching_aid:
+            non_matching_ids.add(aid)
 
     return list(non_matching_ids)
 
 
-def get_image_ids(images_db, arxiv_ids) -> list[int]:
-    ids = []
-    base_ids = set(extract_base(id) for id in arxiv_ids)
+def delete_id(client, idb, aid) -> None:
+    to_delete = []
+    base_id, _ = split_id(aid)
 
-    for img_id, info in images_db.items():
-        if info["base_id"] in base_ids:
-            ids.append(img_id)
+    for id, info in idb.items():
+        if info["base_id"] == base_id: 
+            to_delete.append(id)
+            del idb[id]
+    
+    if to_delete:
+        client.delete("image_search", to_delete)
 
-    return ids
+
+def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(name)s %(levelname)s %(asctime)s %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+    )
+
+    parser = argparse.ArgumentParser(description="Extract images")
+    parser.add_argument("-n", "--num", type=int, default=100, help="up to how many papers to extract from")
+    args = parser.parse_args()
+    print(args)
+
+    extr = FigureExtractor()
+    vect = FigureVectorizer(DEVICE)
+
+    client = get_embeddings_db()
+    pdb = get_papers_db("r")
+    idb = get_images_db("c")
+
+    last_idx = int(max(idb.keys(), default=0))
+
+    non_matching_ids = get_non_matching_ids(pdb, idb)
+
+    for n, aid in enumerate(non_matching_ids):
+        if n > args.num:
+            break
+        
+        delete_id(client, idb, aid)
+
+        try:
+            base_id, version = split_id(aid)
+
+            pdf = fetch_paper(aid)
+            figures, captions = zip(*extr(pdf, verbose=False))
+
+            new_ids = list(range(last_idx, last_idx + len(figures)))
+
+            for id, figure in zip(new_ids, figures):
+                fig_path = os.path.join(EXTRACT_DIR, "%s_%d.png" % (aid, id))
+                Image.fromarray(figure).save(fig_path)
+
+                idb[id] = dict(base_id=base_id, version=version, figure_path=fig_path)
+
+            emb = vect(figures, captions)
+
+            data = [{"id": id, "embedding": e} for id, e in zip(new_ids, emb)]
+            client.insert("image_embeddings", data)
+        except Exception as e:
+            logging.warning(e)
+
+        logging.info("processed and embedded figures for %s" % aid)
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.basicConfig(level=logging.INFO)
+    import pyinstrument
 
-    extracted_dir = "./extracted"
-    os.makedirs(extracted_dir, exist_ok=True)
+    with pyinstrument.Profiler() as profiler:
+        main()
 
-    extractor = FigureExtractor()
-    vectorizer = FigureVectorizer(device)
-
-    client = get_embeddings_db()
-    papers_db = get_papers_db("r")
-    images_db = get_images_db("c")
-    
-    last_idx = int(max(images_db.keys(), default=0))
-
-    non_matching_ids = get_non_matching_ids(papers_db, images_db)
-    delete_ids = get_image_ids(images_db, non_matching_ids)
-
-    for img_id in delete_ids:
-        del images_db[img_id]    
-    
-    for arxiv_id in non_matching_ids:
-        base_id = extract_base(arxiv_id)
-        version = extract_version(arxiv_id)
-
-        pdf = fetch_paper(arxiv_id)
-        figures, captions = zip(*extractor(pdf, verbose=False))
-
-        for idx, figure in enumerate(figures):
-            figure_path = f"{extracted_dir}/{arxiv_id}_figure{idx + 1}.png"
-            try:
-                Image.fromarray(figure).save(figure_path)
-            except Exception as e:
-                logging.error(f"Failed to save image for {arxiv_id}: {e}")
-                continue
-
-            images_db[last_idx + idx] = dict(
-                base_id=base_id, version=version, figure_path=figure_path
-            )
-
-        embeddings = vectorizer(figures, captions)
-        data = [
-            {"id": last_idx + idx, "embedding": emb}
-            for idx, emb in enumerate(embeddings)
-        ]
-
-        try:
-            delete_ids = [d["id"] for d in data]
-            client.delete("image_embeddings", delete_ids)
-        except Exception as e:
-            logging.error(f"Failed to delete embeddings for arxiv_id {arxiv_id}: {e}")
-
-        client.insert("image_embeddings", data)
-
-        logging.info(f"Processed and embedded figures for arxiv_id: {arxiv_id}")
+    profiler.print()
