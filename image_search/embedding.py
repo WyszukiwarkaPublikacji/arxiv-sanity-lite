@@ -2,7 +2,6 @@ import torch
 from sentence_transformers import SentenceTransformer
 from transformers import CLIPModel, CLIPProcessor
 
-
 IMAGE_MODEL = "openai/clip-vit-base-patch16"
 CAPTION_MODEL = "all-MiniLM-L6-v2"
 
@@ -18,7 +17,7 @@ class FigureVectorizer:
 
     def __call__(self, images, captions, batch_size=32):
         caption_emb = self.caption_vectorizer.encode(
-            captions, batch_size=batch_size, convert_to_tensor=True
+            captions, batch_size=batch_size, convert_to_tensor=True, show_progress_bar=False
         ).cpu()
 
         img_emb = []
