@@ -23,6 +23,8 @@ from flask import session
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
 
+from PIL import Image
+
 # -----------------------------------------------------------------------------
 # inits and globals
 
@@ -197,6 +199,11 @@ def chemical_formulas_rank(q: str = ''):
     
     return random_rank()
 
+
+def image_rank(q: str, img: Image.Image):
+    # TODO: implement logic for image search
+    return random_rank()
+
 # -----------------------------------------------------------------------------
 # primary application endpoints
 
@@ -206,9 +213,8 @@ def default_context():
     context['user'] = g.user if g.user is not None else ''
     return context
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 def main():
-
     # default settings
     default_rank = 'time'
     default_tags = ''
@@ -216,19 +222,24 @@ def main():
     default_skip_have = 'no'
 
     # override variables with any provided options via the interface
-    opt_rank = request.args.get('rank', default_rank) # rank type. search|tags|pid|time|random
-    opt_q = request.args.get('q', '') # search request in the text box
-    opt_tags = request.args.get('tags', default_tags)  # tags to rank by if opt_rank == 'tag'
-    opt_pid = request.args.get('pid', '')  # pid to find nearest neighbors to
-    opt_time_filter = request.args.get('time_filter', default_time_filter) # number of days to filter by
-    opt_skip_have = request.args.get('skip_have', default_skip_have) # hide papers we already have?
-    opt_svm_c = request.args.get('svm_c', '') # svm C parameter
-    opt_smiles_input = request.args.get('smiles_input', '')
-    opt_page_number = request.args.get('page_number', '1') # page number for pagination
-
+    opt_rank = request.form.get('rank', default_rank) # rank type. search|tags|pid|time|random
+    opt_q = request.form.get('q', '') # search request in the text box
+    opt_tags = request.form.get('tags', default_tags)  # tags to rank by if opt_rank == 'tag'
+    opt_pid = request.form.get('pid', '')  # pid to find nearest neighbors to
+    opt_time_filter = request.form.get('time_filter', default_time_filter) # number of days to filter by
+    opt_skip_have = request.form.get('skip_have', default_skip_have) # hide papers we already have?
+    opt_svm_c = request.form.get('svm_c', '') # svm C parameter
+    opt_smiles_input = request.form.get('smiles_input', '')
+    opt_page_number = request.form.get('page_number', '1') # page number for pagination
+    
+    opt_image_input = request.files.get('image_input')
+    
     # if a query is given, override rank to be of type "search"
     # this allows the user to simply hit ENTER in the search field and have the correct thing happen
-    if opt_q:
+    if opt_image_input:
+        opt_image_input = Image.open(opt_image_input.stream)
+        opt_rank = 'image'
+    elif opt_q:
         opt_rank = 'search'
 
     # try to parse opt_svm_c into something sensible (a float)
@@ -251,6 +262,8 @@ def main():
         pids, scores = random_rank()
     elif opt_rank == 'chemical_formulas':
         pids, scores = chemical_formulas_rank(opt_smiles_input)
+    elif opt_rank == 'image':
+        pids, scores = image_rank(opt_q, opt_image_input)
     else:
         raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
 
