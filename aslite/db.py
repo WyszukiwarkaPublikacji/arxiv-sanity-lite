@@ -105,6 +105,7 @@ flag='r': open for read-only
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
+IMAGES_DB_FILE = os.path.join(DATA_DIR, 'images.db')
 EMBEDDING_DB_FILE = os.path.join(DATA_DIR, 'embeddings.db') #NOTE: once we set it up with docker it will probably need to be a standalone db
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
@@ -130,6 +131,12 @@ def get_email_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     edb = SqliteDict(DICT_DB_FILE, tablename='email', flag=flag, autocommit=autocommit)
     return edb
+
+def get_images_db(flag="r", autocommit=True):
+    assert flag in ["r", "c"]
+    pdb = CompressedSqliteDict(IMAGES_DB_FILE, tablename="images", flag=flag, autocommit=autocommit)
+    return pdb
+
 
 def setup_chemical_embeddings_collection(client : MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
