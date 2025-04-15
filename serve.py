@@ -142,13 +142,12 @@ def render_fid(fid):
     d = idb[fid]
     path = "static/extracted/%s_%d.png" % (d["base_id"], fid)
     url = path if os.path.isfile(path) else ""
-    print(url)
 
     arxiv_id = d["base_id"]
     if d["version"] > 0:
         arxiv_id += "v" + d["version"]
 
-    return dict(weight=0.0, id=arxiv_id, path=url)
+    return dict(weight=0.0, id=arxiv_id, path=url, caption=d["caption"])
 
 
 def random_rank():
