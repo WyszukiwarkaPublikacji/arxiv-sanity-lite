@@ -111,17 +111,17 @@ def main():
 
             new_ids = list(range(last_id, last_id + len(figures)))
 
-            for id, figure in zip(new_ids, figures):
-                fig_path = f"extracted/{aid}_{id}.png"
+            for id, figure, caption in zip(new_ids, figures, captions):
+                fig_path = f"static/extracted/{aid}_{id}.png"
                 Image.fromarray(figure).save(fig_path)
 
-                idb[id] = dict(base_id=base_id, version=version)
+                idb[id] = dict(base_id=base_id, version=version, caption=caption)
 
-            img_emb, cap_emb = vect(figures, captions)
+            img_emb, cap_emb = vect(captions, figures)
 
             data = [
-                {"id": id, "image_embedding": ie, "caption_embedding": ce}
-                for id, ie, ce in zip(new_ids, img_emb, cap_emb)
+                {"id": id, "image_embedding": e1, "caption_embedding": e2}
+                for id, e1, e2 in zip(new_ids, img_emb, cap_emb)
             ]
 
             client.insert("images_collection", data)
