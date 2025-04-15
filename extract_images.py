@@ -12,16 +12,15 @@ from image_search.embedding import FigureVectorizer
 from image_search.extract import FigureExtractor
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-EXTRACT_DIR = "extracted"
 
-os.makedirs(EXTRACT_DIR, exist_ok=True)
+os.makedirs("extracted", exist_ok=True)
 
 PAPER_URL_TEMPL = "https://arxiv.org/pdf/%s.pdf"
 
 
 def fetch_paper(aid):
     url = PAPER_URL_TEMPL % aid
-    
+
     with requests.get(url) as r:
         r.raise_for_status()
         return io.BytesIO(r.content)
@@ -34,7 +33,7 @@ def split_id(aid) -> tuple[str, int]:
 
 
 def get_non_matching_ids(papers_db, images_db) -> list[str]:
-    """Find all aids in papers.db that are either 
+    """Find all arxiv ids in papers.db that are either
     missing in images.db or have a newer version available."""
     non_matching_ids = set()
 
@@ -61,12 +60,12 @@ def delete_id(client, idb, aid) -> None:
     base_id, _ = split_id(aid)
 
     for id, info in idb.items():
-        if info["base_id"] == base_id: 
+        if info["base_id"] == base_id:
             to_delete.append(id)
             del idb[id]
-    
+
     if to_delete:
-        client.delete("image_search", to_delete)
+        client.delete("images_collection", to_delete)
 
 
 def main():
@@ -77,7 +76,13 @@ def main():
     )
 
     parser = argparse.ArgumentParser(description="Extract images")
-    parser.add_argument("-n", "--num", type=int, default=100, help="up to how many papers to extract from")
+    parser.add_argument(
+        "-n",
+        "--num",
+        type=int,
+        default=100,
+        help="up to how many papers to extract from",
+    )
     args = parser.parse_args()
     print(args)
 
@@ -88,14 +93,14 @@ def main():
     pdb = get_papers_db("r")
     idb = get_images_db("c")
 
-    last_idx = int(max(idb.keys(), default=0))
+    last_id = int(max(idb.keys(), default=0))
 
     non_matching_ids = get_non_matching_ids(pdb, idb)
 
     for n, aid in enumerate(non_matching_ids):
         if n > args.num:
             break
-        
+
         delete_id(client, idb, aid)
 
         try:
@@ -104,22 +109,28 @@ def main():
             pdf = fetch_paper(aid)
             figures, captions = zip(*extr(pdf, verbose=False))
 
-            new_ids = list(range(last_idx, last_idx + len(figures)))
+            new_ids = list(range(last_id, last_id + len(figures)))
 
             for id, figure in zip(new_ids, figures):
-                fig_path = os.path.join(EXTRACT_DIR, "%s_%d.png" % (aid, id))
+                fig_path = f"extracted/{aid}_{id}.png"
                 Image.fromarray(figure).save(fig_path)
 
-                idb[id] = dict(base_id=base_id, version=version, figure_path=fig_path)
+                idb[id] = dict(base_id=base_id, version=version)
 
-            emb = vect(figures, captions)
+            img_emb, cap_emb = vect(figures, captions)
 
-            data = [{"id": id, "embedding": e} for id, e in zip(new_ids, emb)]
-            client.insert("image_embeddings", data)
+            data = [
+                {"id": id, "image_embedding": ie, "caption_embedding": ce}
+                for id, ie, ce in zip(new_ids, img_emb, cap_emb)
+            ]
+
+            client.insert("images_collection", data)
+
+            last_id += len(figures)
+            logging.info("processed and embedded figures for %s" % aid)
+
         except Exception as e:
             logging.warning(e)
-
-        logging.info("processed and embedded figures for %s" % aid)
 
 
 if __name__ == "__main__":

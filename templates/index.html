@@ -1,13 +1,22 @@
 {% extends "base.html" %}
 
 {% block variables %}
+
+{% if images is defined %}
+<script>
+var images = {{ images | tojson }};
+</script>
+{% else %}
 <script>
 var papers = {{ papers | tojson }};
 var tags = {{ tags | tojson }};
 var words = {{ words | tojson }};
 var words_desc = {{ words_desc | tojson }};
 var gvars = {{ gvars | tojson }};
+</script>
+{% endif %}
 
+<script>
 /*
 JS code here handles pagination. I really don't super love this approach,
 if anyone can think of a cleaner / shorter way please let me know.
@@ -118,6 +127,11 @@ var move_page = function(int_offset) {
 {% endblock %}
 
 {% block elements %}
-<script src="{{ url_for('static', filename='paper_list.js') }}" type="text/babel"></script>
+{% if images is defined %}
+    <script src="{{ url_for('static', filename='image_list.js') }}" type="text/babel"></script>
+{% else %}
+    <script src="{{ url_for('static', filename='paper_list.js') }}" type="text/babel"></script>
+{% endif %}
+
 <script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
 {% endblock %}
