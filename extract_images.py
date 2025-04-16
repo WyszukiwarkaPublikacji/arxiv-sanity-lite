@@ -1,59 +1,29 @@
 import argparse
-import asyncio
 import io
 import logging
 import os
-import aiohttp
+
+import requests
+import torch
 from PIL import Image
 
-import torch
 from aslite.db import get_embeddings_db, get_images_db, get_papers_db
 from image_search.embedding import FigureVectorizer
 from image_search.extract import FigureExtractor
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-os.makedirs("static/extracted", exist_ok=True)
+os.makedirs("extracted", exist_ok=True)
 
 PAPER_URL_TEMPL = "https://arxiv.org/pdf/%s.pdf"
 
 
-async def fetch_paper_async(aid, session):
+def fetch_paper(aid):
     url = PAPER_URL_TEMPL % aid
-    async with session.get(url) as response:
-        response.raise_for_status()
-        return io.BytesIO(await response.read())
 
-
-async def process_aid(aid, extr, vect, client, idb, last_id, session):
-    try:
-        base_id, version = split_id(aid)
-        pdf = await fetch_paper_async(aid, session)
-        figures, captions = zip(*extr(pdf, verbose=False))
-
-        new_ids = list(range(last_id, last_id + len(figures)))
-
-        for id, figure, caption in zip(new_ids, figures, captions):
-            fig_path = f"static/extracted/{aid}_{id}.png"
-            Image.fromarray(figure).save(fig_path)
-
-            idb[id] = dict(base_id=base_id, version=version, caption=caption)
-
-        img_emb, cap_emb = vect(captions, figures)
-
-        data = [
-            {"id": id, "image_embedding": e1, "caption_embedding": e2}
-            for id, e1, e2 in zip(new_ids, img_emb, cap_emb)
-        ]
-
-        client.insert("images_collection", data)
-
-        logging.info("Processed and embedded figures for %s" % aid)
-
-        return len(figures)
-    except Exception as e:
-        logging.warning(f"Error processing {aid}: {e}")
-        return 0
+    with requests.get(url) as r:
+        r.raise_for_status()
+        return io.BytesIO(r.content)
 
 
 def split_id(aid) -> tuple[str, int]:
@@ -98,24 +68,6 @@ def delete_id(client, idb, aid) -> None:
         client.delete("images_collection", to_delete)
 
 
-async def process_all(aids, extr, vect, client, idb, max_concurrency):
-    semaphore = asyncio.Semaphore(max_concurrency)
-    last_id = int(max(idb.keys(), default=0))
-
-    async with aiohttp.ClientSession() as session:
-        tasks = [
-            asyncio.create_task(process_with_semaphore(semaphore, aid, extr, vect, client, idb, last_id, session))
-            for aid in aids
-        ]
-        results = await asyncio.gather(*tasks)
-    return sum(results)  # Total number of figures processed
-
-
-async def process_with_semaphore(semaphore, aid, extr, vect, client, idb, last_id, session):
-    async with semaphore:
-        return await process_aid(aid, extr, vect, client, idb, last_id, session)
-
-
 def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -129,9 +81,10 @@ def main():
         "--num",
         type=int,
         default=100,
-        help="Up to how many papers to extract from",
+        help="up to how many papers to extract from",
     )
     args = parser.parse_args()
+    print(args)
 
     extr = FigureExtractor()
     vect = FigureVectorizer(DEVICE)
@@ -140,16 +93,50 @@ def main():
     pdb = get_papers_db("r")
     idb = get_images_db("c")
 
+    last_id = int(max(idb.keys(), default=0))
+
     non_matching_ids = get_non_matching_ids(pdb, idb)
-    aids_to_process = non_matching_ids[:args.num]
 
-    import pyinstrument
-    with pyinstrument.Profiler() as profiler:
-        total_figures = asyncio.run(process_all(aids_to_process, extr, vect, client, idb, max_concurrency=50))
+    for n, aid in enumerate(non_matching_ids):
+        if n > args.num:
+            break
 
-    logging.info(f"Total figures processed: {total_figures}")
-    profiler.print()
+        delete_id(client, idb, aid)
+
+        try:
+            base_id, version = split_id(aid)
+
+            pdf = fetch_paper(aid)
+            figures, captions = zip(*extr(pdf, verbose=False))
+
+            new_ids = list(range(last_id, last_id + len(figures)))
+
+            for id, figure, caption in zip(new_ids, figures, captions):
+                fig_path = f"static/extracted/{aid}_{id}.png"
+                Image.fromarray(figure).save(fig_path)
+
+                idb[id] = dict(base_id=base_id, version=version, caption=caption)
+
+            img_emb, cap_emb = vect(captions, figures)
+
+            data = [
+                {"id": id, "image_embedding": e1, "caption_embedding": e2}
+                for id, e1, e2 in zip(new_ids, img_emb, cap_emb)
+            ]
+
+            client.insert("images_collection", data)
+
+            last_id += len(figures)
+            logging.info("processed and embedded figures for %s" % aid)
+
+        except Exception as e:
+            logging.warning(e)
 
 
 if __name__ == "__main__":
-    main()
+    import pyinstrument
+
+    with pyinstrument.Profiler() as profiler:
+        main()
+
+    profiler.print()
