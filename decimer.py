@@ -1,13 +1,9 @@
-"""Decimer test. This code will have to be moved somewhere else before merging to master"""
-
-# https://arxiv.org/pdf/<id>
-
 import requests
-import pdf2image  # Debian: apt install poppler-utils / Alpine: apk add poppler
+import pdf2image  
 from PIL import Image
 import numpy as np
 import logging
-import decimer_segmentation  # Debian: apt install libgl1
+import decimer_segmentation 
 import DECIMER
 from aslite.fingerprint import calculate_embedding
 import rdkit.Chem
@@ -36,7 +32,6 @@ def get_pdf_url(id_: str, source: str = "arxiv") -> str:
 
 
 def download_pdf_as_images(url: str) -> list[np.ndarray]:
-    # Warning: the whole paper is downloaded to RAM (TODO: check if it's really a problem at scale).
     r = requests.get(url)
     r.raise_for_status()
     images = pdf2image.convert_from_bytes(r.content)
