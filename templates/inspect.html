@@ -15,7 +15,7 @@ var words_desc = {{ words_desc | tojson }};
     <section class="article-section">
         <div class="article-header">
             <h1>{{ paper.title }}</h1>
-            <a href="#" class="pdf-download">Pobierz jako PDF</a>
+            <a href="https://arxiv.org/pdf/{{ paper.id }}" target="_blank" class="pdf-download">Pobierz jako PDF (z arxiv)</a>
         </div>
         <p>{{ paper.summary }}</p>
     </section>
