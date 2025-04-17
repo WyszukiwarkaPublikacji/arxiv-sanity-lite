@@ -11,7 +11,7 @@ class MilvusSetterDB:
     def create_collectio_metas() -> bool:
         try:
             fields = [
-                FieldSchema(name="key", dtype=DataType.STRING),
+                FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
                 FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=768)
             ]
 
@@ -29,7 +29,7 @@ class MilvusSetterDB:
                 "index_type": "IVF_FLAT"
             }
 
-            collection.create_index(field_name="metas", index_params=index_params)
+            collection.create_index( index_params=index_params)
 
             print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' created successfully with an index!")
             return True
@@ -42,7 +42,7 @@ class MilvusSetterDB:
     def create_collection_papers() -> bool:
         try:
             fields = [
-                FieldSchema(name="key", dtype=DataType.STRING),
+                FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
                 FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=768)
             ]
 
@@ -60,7 +60,7 @@ class MilvusSetterDB:
                 "index_type": "IVF_FLAT"
             }
 
-            collection.create_index(field_name="value", index_params=index_params)
+            collection.create_index(index_params=index_params)
 
             print(f"Collection '{MilvusSetterDB.COLLECTION_NAME2}' created successfully with an index!")
             return True

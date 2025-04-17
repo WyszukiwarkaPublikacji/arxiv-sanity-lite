@@ -51,11 +51,7 @@ Publications = Table('publications', metadata,
     Column('updated_at', DateTime, server_default=func.now(), onupdate=func.now())
 )
 
-Citations = Table('citations', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('origin_publication_id', BigInteger, ForeignKey('publications.id'), nullable=False),
-    Column('citation_publication_id', BigInteger, ForeignKey('publications.id'), nullable=False)
-)
+
 
 PublicationAuthors = Table('publication_authors', metadata,
     Column('id', BigInteger, primary_key=True),
@@ -130,9 +126,14 @@ Papers = Table('papers', metadata,
     Column('value', LargeBinary, nullable=True)
 )
 
+Citations = Table('citations', metadata,
+    Column('id', BigInteger, primary_key=True),
+    Column('origin_publication_id', String(30), ForeignKey('papers.key'), nullable=False),
+    Column('citation_publication_id', String(30), ForeignKey('papers.key'), nullable=False)
+)
 
 def main():
-  metadata.drop_all(engine)
+#   metadata.drop_all(engine)
   metadata.create_all(engine)
 
 if __name__ == '__main__':
