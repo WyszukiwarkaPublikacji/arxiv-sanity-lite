@@ -39,7 +39,7 @@ class FigureVectorizer:
                     output = self.image_vectorizer.get_image_features(**inputs).cpu()
                     img_emb.extend(output.tolist())
 
-        return img_emb, caption_emb
+        return caption_emb, img_emb
 
 
 def hybrid_search(client, image_embedding, caption_embedding, limit=10):
