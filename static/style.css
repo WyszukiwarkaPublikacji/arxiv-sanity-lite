@@ -71,7 +71,6 @@ body {
 }
 
 .white-container-for-other-purposes {
-    display: flex;
     align-items: center;
     background: #fdf9f6;
     border-radius: 10px;
