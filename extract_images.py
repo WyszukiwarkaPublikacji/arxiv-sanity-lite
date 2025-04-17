@@ -85,7 +85,7 @@ async def fetch_paper(arxiv_id, q, session, sem):
 
 def process_papers(q: Queue, idb, edb):
     extractor, vectorizer = get_models()
-    last_id = max(map(int, idb.keys())) + 1
+    last_id = max(map(int, idb.keys()), default=0) + 1
 
     while True:
         print(q.qsize())
