@@ -1,9 +1,15 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #a9b6cc;
     color: #333;
-    margin: 0;
-    padding-bottom: 50px;
 }
 
 #header {
@@ -70,16 +76,6 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.white-container-for-other-purposes {
-    align-items: center;
-    background: #fdf9f6;
-    border-radius: 10px;
-    padding: 2vmax 2vmax;
-    width: 60%; 
-    margin: auto;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
 .search-icon {
     margin-right: 10px;
     color: #888;
@@ -102,7 +98,6 @@ body {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s;
-    text-decoration: none;
 }
 
 #search-btn:hover {
@@ -155,122 +150,17 @@ body {
     margin-bottom: 15px;
 }
 
-.tag {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 14px;
-    border-radius: 15px;
-    background: #6a7ff5;
-    color: white;
-    margin: 2px;
-}
-
-.date {
-    font-size: 14px;
-    color: #999;
-}
-
-/* inspect.html */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #a9b6cc;
-    color: #333;
-    margin: 0;
-    padding-bottom: 50px;
-    font-size: 18px;
-}
-
-#header {
+.card .tags {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 15px 30px;
-    background-color: #a9b6cc;
-    box-shadow: none;
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
-#header a {
-    padding: 8px 16px;
-    border-radius: 10px;
-    background: #6a7ff5;
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    transition: background-color 0.3s;
-}
-
-#header a:hover {
-    background: #5568c7;
-}
-
-#header #home-link {
-    background: transparent;
-    font-size: 40px;
-    padding: 0;
-    margin-right: auto;
-    box-shadow: none;
-}
-
-#recommended-section {
-    margin: 40px auto;
-    width: 95%;
-}
-
-#recommended-section h2 {
-    color: #fdf9f6;
-    margin-bottom: 30px;
-    text-align: center;
-    font-size: 30px;
-}
-
-#cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-}
-
-.card {
-    display: block;
-    background: rgba(255,255,255,0.9);
-    border-radius: 15px;
-    padding: 20px;
-    text-decoration: none;
-    color: inherit;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-}
-
-.card h3 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #444;
-}
-
-.card .author {
-    font-size: 16px;
-    color: #777;
-    margin-bottom: 15px;
-}
-
-.tag {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 14px;
-    border-radius: 15px;
-    background: #6a7ff5;
-    color: white;
-    margin: 2px;
-}
-
-.date {
+.card .date {
     font-size: 14px;
     color: #999;
 }
+
 
 .main-container {
     display: flex;
@@ -305,7 +195,8 @@ body {
     flex-direction: column;
 }
 
-.author-box, .related-articles {
+.author-box,
+.related-articles {
     background: #fdf9f6;
     border-radius: 20px;
     padding: 20px;
@@ -313,7 +204,8 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-.author-box h2, .related-articles h3 {
+.author-box h2,
+.related-articles h3 {
     color: #455d86;
     font-size: 24px;
 }
@@ -334,4 +226,177 @@ body {
 .related-card p {
     font-size: 16px;
     color: #555;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+
+
+.form-control {
+    padding: 0.6em 1em;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-right: 0.5em;
+}
+
+.form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 0.6em 1.2em;
+    background-color: #4f6df5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #364dc0;
+}
+
+.btn.danger {
+    background-color: #e74c3c;
+}
+
+.btn.danger:hover {
+    background-color: #c0392b;
+}
+
+.login-section,
+.email-section {
+    margin-bottom: 3rem;
+}
+
+.info-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f2f4f8;
+    border-left: 4px solid #4f6df5;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.logout-link {
+    margin-top: 1.5rem;
+}
+
+.profile-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.welcome-section {
+    flex: 0.5;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+    background-color: #ffffff;
+    padding: 60px 80px;
+    align-items: center;
+    overflow-y: auto;
+}
+
+.welcome-left h1 {
+    font-size: 48px;
+    color: #455d86;
+    margin: 0 0 20px;
+}
+
+.welcome-left p {
+    font-size: 18px;
+    color: #666666;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.tags-title {
+    font-size: 16px;
+    color: #455d86;
+    margin: 0 0 12px;
+}
+
+.edit-tags-link {
+    font-weight: bold;
+    color: #455d86;
+    text-decoration: none;
+}
+
+.tag-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #333333;
+    background-color: #e0e0e0;
+}
+
+.tag.astronomia { background-color: #f7d6f5; }
+.tag.informatyka { background-color: #d7d4fc; }
+.tag.fizyka { background-color: #c8e8e5; }
+.tag.chemia { background-color: #fde2b6; }
+
+
+.bookmarks-section {
+    flex: 1;
+    background-color: #a5a7e3;
+    padding: 20px 80px 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    margin: 0;
+    border-radius: 0 !important;
+}
+
+.bookmarks-section h2 {
+    font-size: 24px;
+    color: #ffffff;
+    text-align: center;
+    margin: 0 0 40px;
+}
+
+
+
+
+
+
+
+.white-container-for-other-purposes {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    color: #333;
+}
+
+#statswrap > div {
+    margin-bottom: 12px;
+}
+
+#statswrap b {
+    color: #455d86;
 }

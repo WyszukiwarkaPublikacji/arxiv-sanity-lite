@@ -1,76 +1,65 @@
 {% extends "base.html" %}
 
-{% block variables %}
+{% block elements %}
+<style>
+  #header {
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<div id="profilewrap" class="white-container-for-other-purposes">
+<div class="profile-page">
 
-    {% if user %}
-    <div>
-        <div>
-            <div><b>Current session</b></div>
-            <div>Logged in user: {{ user }}</div>
-        </div>
-        <br />
-        <div>
-            <div><b>Email recommendations</b></div>
-            <div style="text-align: justify;">
-                Users can receive regular new paper recommendations via email based on their tags.
-                (This is still being developed, may not be running or may be unreliable.)
-                Register your email address below to receive these recommendations.
-                To stop the recommendations simply delete your email address.
-            </div>
-            <br />
-            <div>
-                <form id="email-form" action="{{ url_for('register_email') }}" method="post">
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="email" placeholder="Email address" value="{{ email }}">
-                        &nbsp;<input type="submit" class="btn" value="Set">
-                    </div>
-                </form>
-            </div>
-        </div>
-        <br />
-        <br />
-        <div>
-            <a href="{{ url_for('logout') }}" id="search-btn">Log out</a>
-        </div>
+  {% if user %}
+  <section class="welcome-section">
+    <div class="welcome-left">
+      <h1>Welcome, {{ user }}!</h1>
+      <p>
+        Here, you can modify your tags and interests, add or remove bookmarks, and enjoy browsing scientific publications.
+      </p>
     </div>
-    {% else %}
-    <div>
-
-        <div id="profile-warning">
-            <p style="text-align: justify;">
-            Okay, arxiv-sanity-lite uses a super lite version of
-            "user accounts" where there are no passwords. Basically, you can "log in"
-            with any arbitrary username. If you want to share your library with a
-            friend, you can just tell them the username. And if you'd like to keep your
-            account private, just make your username be something unique
-            and write it down somewhere safe.
-            </p>
-        </div>
-
-        <form id="profile-login-form" action="/login" method="POST">
-            <center>
-                <i style="color: rgb(220, 0, 0)">TLDR: there are no passwords!</i>
-                <br />
-                <br />
-                <div class="form-group search-container" style="background-color: rgb(234, 234, 234);">
-                    <label>Username:&nbsp;</label>
-                    <input class="form-control" type="text" name="username" id="search-bar">
-                </div>
-                <br />
-                <br />
-            </center>
-            <button type="submit" class="btn" id="search-btn" style="float: right;">Log in</button>
-            <br style="clear: both;" />
-        </form>
+    <div class="welcome-right">
+      <p class="tags-title">
+        Your tags and interests <a href="#" class="edit-tags-link">[edit]</a>:
+      </p>
+      <div class="tag-badges">
+        <span class="tag astronomia">🔭 Astronomy</span>
+        <span class="tag informatyka">💻 Computer Science</span>
+        <span class="tag fizyka">⚛️ Physics</span>
+        <span class="tag chemia">⚗️ Chemistry</span>
+      </div>
     </div>
-    {% endif %}
+  </section>
+
+  <section class="bookmarks-section">
+    <h2>Your bookmarks</h2>
+    <div class="card-grid">
+      {% for i in range(4) %}
+      <div class="card">
+        <h3>Super Smart Article No. {{ i+1 }}</h3>
+        <div class="tags">
+          <span class="tag chemia">Chemistry</span>
+          <span class="tag fizyka">Physics</span>
+        </div>
+        <p class="author">K. Hålfen Dahlberg</p>
+        <p class="date">📅 03.2022</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% else %}
+  <section class="welcome-section">
+    <h1>Welcome!</h1>
+    <p>Please log in to see your bookmarks.</p>
+    <form action="/login" method="POST" class="form-inline">
+      <input type="text" name="username" placeholder="Username" class="form-control">
+      <button type="submit" class="btn">Log In</button>
+    </form>
+  </section>
+  {% endif %}
 
 </div>
-{% endblock %}
-
-{% block elements %}
 {% endblock %}
