@@ -384,6 +384,29 @@ def about():
     context = default_context()
     return render_template('about.html', **context)
 
+
+
+
+@app.route('/settings')
+def settings():
+    context = default_context()
+    from flask import request
+    with get_email_db() as edb:
+        email = edb.get(g.user, '')
+    context['email'] = email
+    context['notif_enabled'] = bool(email)
+
+    context['frequency'] = request.args.get('frequency', 'daily')
+
+    context['gvars'] = {
+        'skip_have': request.args.get('skip_have', 'no'),
+        'rank':      request.args.get('rank', 'time'),
+    }
+
+    return render_template('settings.html', **context)
+
+
+
 # -----------------------------------------------------------------------------
 # tag related endpoints: add, delete tags for any paper
 

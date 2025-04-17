@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="white-container-for-other-purposes settings-page">
+
+  {% if user %}
+    <h2>Settings</h2>
+
+    <!-- Tab headers -->
+    <ul class="settings-tabs">
+      <li data-tab="general" class="active">General</li>
+      <li data-tab="notifications">Notifications</li>
+    </ul>
+
+    <!-- General settings -->
+    <div class="tab-content" id="tab-general">
+      <form id="settings-form">
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="focus-mode-toggle">
+            Enable Focus Mode
+          </label>
+          <p class="help-text">Lorem ipsum</p>
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="skip-have-toggle" name="skip_have"
+                   {% if gvars.skip_have == 'yes' %}checked{% endif %}>
+            Hide papers I’ve already saved
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <!-- Notifications settings -->
+    <div class="tab-content" id="tab-notifications" style="display:none">
+      <form id="notification-form" action="{{ url_for('register_email') }}" method="post">
+        <div class="form-group">
+          <input type="email"
+                 class="form-control"
+                 name="email"
+                 placeholder="Email address"
+                 value="{{ email }}">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox"
+                   id="notif_enabled"
+                   name="notif_enabled"
+                   {{ 'checked' if notif_enabled else '' }}>
+            Enable email notifications
+          </label>
+        </div>
+        <fieldset id="freq-options" {% if not notif_enabled %}disabled{% endif %}>
+          <legend>Notification frequency</legend>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="frequency" value="daily"  {% if frequency=='daily' %}checked{% endif %}>
+              Daily
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="frequency" value="weekly" {% if frequency=='weekly' %}checked{% endif %}>
+              Weekly
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="frequency" value="monthly"{% if frequency=='monthly' %}checked{% endif %}>
+              Monthly
+            </label>
+          </div>
+        </fieldset>
+        <br>
+        <button type="submit" id="save-notifications-btn" class="btn">Save notifications</button>
+      </form>
+    </div>
+
+    <!-- Logout -->
+    <button type="button" id="logout-btn" class="btn danger">Log Out</button>
+  {% else %}
+    <p>Please <a href="{{ url_for('login') }}">log in</a> to access settings.</p>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block elements %}
+<script>
+
+
+document.querySelectorAll('.settings-tabs li').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.settings-tabs li').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c=>c.style.display='none');
+    document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+  });
+});
+
+
+
+const notifSwitch = document.getElementById('notif_enabled');
+const freqOptions = document.getElementById('freq-options');
+if (notifSwitch) {
+  notifSwitch.addEventListener('change', () => {
+    freqOptions.disabled = !notifSwitch.checked;
+  });
+}
+
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+  window.location = "{{ url_for('logout') }}";
+});
+</script>
+{% endblock %}

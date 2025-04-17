@@ -400,3 +400,176 @@ body {
 #statswrap b {
     color: #455d86;
 }
+
+
+
+
+
+
+
+
+
+
+#notification-form input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 10px;
+    position: relative;
+    vertical-align: middle;
+    margin-right: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  #notification-form input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+  }
+  
+  #notification-form input[type="checkbox"]:checked {
+    background: #6a7ff5;
+  }
+  
+  #notification-form input[type="checkbox"]:checked::after {
+    transform: translateX(20px);
+  }
+  
+  #notification-form input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    position: relative;
+    margin-right: 8px;
+    cursor: pointer;
+    transition: border 0.3s;
+  }
+  
+  #notification-form input[type="radio"]::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    background: #6a7ff5;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  #notification-form input[type="radio"]:checked {
+    border-color: #6a7ff5;
+  }
+  
+  #notification-form input[type="radio"]:checked::after {
+    opacity: 1;
+  }
+  
+
+
+
+#freq-options {
+    border: none;
+    padding: 0;
+    margin-top: 10px;
+  }
+  
+  #freq-options legend {
+    font-weight: bold;
+    color: #455d86;
+    margin-bottom: 8px;
+  }
+  
+  #freq-options[disabled] {
+    opacity: 1;
+  }
+  
+  #freq-options[disabled] label {
+    color: #777;
+    cursor: not-allowed;
+  }
+  
+  #freq-options[disabled] input[type="radio"] {
+    border-color: #ccc;
+  }
+  
+
+
+  
+
+.settings-page h2 {
+    color: #455d86;
+    margin-bottom: 1rem;
+}
+.settings-tabs {
+    list-style: none;
+    display: flex;
+    border-bottom: 2px solid #ccc;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+.settings-tabs li {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: #555;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-bottom 0.2s;
+}
+.settings-tabs li.active {
+    color: #6a7ff5;
+    border-bottom-color: #6a7ff5;
+}
+
+.settings-page form {
+    max-width: 600px;
+}
+.settings-page .form-group {
+    margin-bottom: 1.5rem;
+}
+.settings-page .help-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+#notification-form input[type="checkbox"],
+#notification-form input[type="radio"] {
+    vertical-align: middle;
+}
+
+body.focus-mode #header,
+body.focus-mode #main-header,
+body.focus-mode .sidebar-section,
+body.focus-mode .related-articles,
+body.focus-mode .author-box {
+    display: none !important;
+}
+body.focus-mode .card-grid,
+body.focus-mode #cards {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+
+
+#logout-btn {
+    margin: 5px;
+}
+
+
+#save-notifications-btn {
+    margin: 5px;
+}
+
