@@ -2,10 +2,8 @@ aiohttp==3.11.12
 feedparser==6.0.11
 PyMuPDF==1.25.5
 Flask==3.1.0
-matplotlib==3.10.1
-numpy==2.2.4
+numpy==2.1.1
 Pillow==11.2.1
-pyinstrument==5.0.1
 pymilvus==2.5.4
 Requests==2.32.3
 scikit_learn==1.6.1
@@ -13,7 +11,7 @@ sendgrid==6.11.0
 sentence_transformers==3.4.1
 SQLAlchemy==2.0.38
 sqlitedict==2.1.0
-torch==2.5.1+cu121
+torch==2.5.1
 tqdm==4.67.1
 transformers==4.49.0
 ultralytics==8.3.90
