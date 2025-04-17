@@ -13,7 +13,7 @@ import requests
 from PIL import Image
 from tqdm import tqdm
 
-CAPTION_REGEX = re.compile(r"\b(fig(?:ure)?)\s*([\s\S]+)?", re.IGNORECASE)
+CAPTION_REGEX = re.compile(r"\b(fig(?:ure)?\s*\d*)\s*[:.]?\s*([\s\S]+)", re.IGNORECASE)
 
 WEIGHTS_URL = "https://drive.google.com/uc?export=download&id=12wkHnhD49uCoBIEUrJ_IVHpHutu0qNCe"
 
