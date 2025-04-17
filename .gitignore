@@ -11,4 +11,5 @@ venv
 .env
 .volumes
 volumes
-extracted
+static/images
+tmp
