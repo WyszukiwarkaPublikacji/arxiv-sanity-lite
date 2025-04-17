@@ -6,7 +6,6 @@ logger = logging.getLogger(__name__)
 import re
 
 import ultralytics
-import io
 
 import fitz
 import numpy as np
@@ -42,7 +41,7 @@ def distance_matrix(a, b, wx=1.0, wy=1.0, w_above=1.0):
     return dx + dy
 
 
-def render_page(page, dpi=100):
+def render_page(page, dpi=72):
     pix = page.get_pixmap(dpi=dpi)
     image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     image = np.asarray(image)
@@ -85,6 +84,16 @@ class FigureExtractor:
             return self._load_model(weights_path, fresh=True)
 
         return model
+    
+    def _extract_captions(self, page):
+        captions = []
+        for block in page.get_text('blocks'):
+            *bbox, text = block[:5]
+            
+            m = re.match(CAPTION_REGEX, text)
+            if m:
+                captions.append([m.group(2), bbox])
+        return captions     
 
     def _match_captions(self, render, captions, caption_centers, bboxes):
         bboxes = [box.astype(int) for box in bboxes]
@@ -110,21 +119,16 @@ class FigureExtractor:
         out = []
         pdf = fitz.open(path)
 
-        all_captions = [
-            [b for b in page.get_text("blocks") if re.match(CAPTION_REGEX, b[4])]
-            for page in pdf
-        ]
-
-        renders = [render_page(p, dpi=100) for p, c in zip(pdf, all_captions) if c]
-
-        results = self.model.predict(renders, **kwargs)
+        all_captions = [self._extract_captions(page) for page in pdf]
+        renders = [render_page(p) for p, c in zip(pdf, all_captions) if c]
+        results = self.model.predict(renders, **kwargs) if renders else []
 
         for render, caption_blocks, result in zip(
             renders, filter(None, all_captions), results
         ):
             bboxes = [box.cpu().numpy() for box in result.boxes.xyxy]
-            captions = [c[4] for c in caption_blocks]
-            centers = [box_center(c[:4]) for c in caption_blocks]
+            captions = [c[0] for c in caption_blocks]
+            centers = [box_center(c[1]) for c in caption_blocks]
 
             out.extend(self._match_captions(render, captions, centers, bboxes))
 
