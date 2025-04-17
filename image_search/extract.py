@@ -106,9 +106,9 @@ class FigureExtractor:
         # return [(crop(render, box), None) for box in bboxes]
         return []
 
-    def __call__(self, pdf, **kwargs):
+    def __call__(self, path, **kwargs):
         out = []
-        pdf = fitz.open(stream=pdf) if isinstance(pdf, io.BytesIO) else fitz.open(pdf)
+        pdf = fitz.open(path)
 
         all_captions = [
             [b for b in page.get_text("blocks") if re.match(CAPTION_REGEX, b[4])]
@@ -119,13 +119,13 @@ class FigureExtractor:
 
         results = self.model.predict(renders, **kwargs)
 
-        for render, captions, result in zip(
+        for render, caption_blocks, result in zip(
             renders, filter(None, all_captions), results
         ):
             bboxes = [box.cpu().numpy() for box in result.boxes.xyxy]
-            captions = [c[4] for c in captions]
-            caption_centers = [box_center(c[:4]) for c in captions]
+            captions = [c[4] for c in caption_blocks]
+            centers = [box_center(c[:4]) for c in caption_blocks]
 
-            out.extend(self._match_captions(render, captions, caption_centers, bboxes))
+            out.extend(self._match_captions(render, captions, centers, bboxes))
 
         return out

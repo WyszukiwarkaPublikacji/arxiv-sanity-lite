@@ -16,11 +16,10 @@ import numpy as np
 import torch
 from sklearn import svm
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 from image_search.embedding import FigureVectorizer, hybrid_search
+from extract_images import get_image_path
 
-vectorizer = FigureVectorizer(DEVICE)
+vectorizer = FigureVectorizer("cuda" if torch.cuda.is_available() else "cpu")
 
 from flask import g  # global session-level object
 from flask import Flask, redirect, render_template, request, session, url_for
@@ -136,18 +135,18 @@ def render_pid(pid):
     )
 
 
-def render_fid(fid):
+def render_iid(iid):
     # render a single image with just the information we need for the UI
     idb = get_images()
-    d = idb[fid]
-    path = "static/extracted/%s_%d.png" % (d["base_id"], fid)
-    url = path if os.path.isfile(path) else ""
+    d = idb[iid]
+    path = get_image_path(d['base_id'], iid)
+    url = path if os.path.isfile(path) else ''
 
-    arxiv_id = d["base_id"]
+    aid = d["base_id"]
     if d["version"] > 0:
-        arxiv_id += "v" + d["version"]
+        aid += "v" + d["version"]
 
-    return dict(weight=0.0, id=arxiv_id, path=url, caption=d["caption"])
+    return dict(weight=0.0, id=aid, path=url, caption=d["caption"])
 
 
 def random_rank():
@@ -255,7 +254,7 @@ def chemical_formulas_rank(q: str = ""):
 
 def image_rank(q: str, img: Image.Image):
     client = get_embeddings()
-    image_emb, text_emb = vectorizer([q], [img] if img else None)
+    text_emb, image_emb = vectorizer([q], [img] if img else None)
 
     if q and img:
         res = hybrid_search(client, image_emb, text_emb)
@@ -320,10 +319,10 @@ def main():
         page_number = 1
 
     if opt_rank == "image":
-        fids, scores = image_rank(opt_q, opt_image_input)
+        iids, scores = image_rank(opt_q, opt_image_input)
 
         # render all images to just the information we need for the UI
-        images = [render_fid(fid) for fid in fids]
+        images = [render_iid(iid) for iid in iids]
         for i, d in enumerate(images):
             d["weight"] = float(scores[i])
 
