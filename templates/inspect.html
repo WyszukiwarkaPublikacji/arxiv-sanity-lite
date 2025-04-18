@@ -15,7 +15,7 @@ var words_desc = {{ words_desc | tojson }};
     <section class="article-section">
         <div class="article-header">
             <h1>{{ paper.title }}</h1>
-            <a href="https://arxiv.org/pdf/{{ paper.id }}" target="_blank" class="pdf-download">Pobierz jako PDF (z arxiv)</a>
+            <a href="https://arxiv.org/pdf/{{ paper.id }}" target="_blank" class="pdf-download">Download PDF (arxiv)</a>
         </div>
         <p>{{ paper.summary }}</p>
     </section>
@@ -24,7 +24,7 @@ var words_desc = {{ words_desc | tojson }};
         <div class="author-box">
             <h2>{{ paper.authors }}</h2>
             <div class="date">{{ paper.time }}</div>
-            <h3>Abstrakt artykułu</h3>
+            <h3>Abstract</h3>
             <p>{{ paper.summary }}</p>
             <div class="tags">
                 {% for tag in paper.tags.split(', ') %}
@@ -34,9 +34,9 @@ var words_desc = {{ words_desc | tojson }};
         </div>
 
         <div class="related-articles">
-            <h3>Podobne artykuły</h3>
+            <h3>Similar papers</h3>
             {% for sim_paper in similar_papers %}
-            <div class="related-card">
+            <div class="related-card" onClick="window.location.href = '?pid={{ sim_paper.id }}';">
                 <h4>{{ sim_paper.title }}</h4>
                 <p>Autorzy: {{ sim_paper.authors }}</p>
                 <div class="tags">

@@ -2,7 +2,6 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
 }
 
 
@@ -10,6 +9,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #a9b6cc;
     color: #333;
+}
+
+center {
+    width: 100%;
 }
 
 #header {
@@ -71,7 +74,7 @@ body {
     background: #fdf9f6;
     border-radius: 10px;
     padding: 5px 10px;
-    width: 60%;
+    width: 75%;
     max-width: 700px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -108,6 +111,31 @@ body {
     margin: 40px auto;
     width: 95%;
 }
+
+#rank_select {
+    background-color: transparent;
+    font-size: inherit;
+    border: 0;
+    margin-left: 10px;
+    height: 100%;
+}
+
+#cbox_fast {
+    font-size: 0.9vw;
+    margin-top: 10px;
+}
+
+#cbox_fast a {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 14px;
+    border-radius: 15px;
+    background: #6a7ff5;
+    color: white;
+    margin: 2px;
+    text-decoration: none;
+}
+
 
 #recommended-section h2 {
     color: #fdf9f6;
@@ -215,6 +243,11 @@ body {
     border-radius: 15px;
     padding: 10px;
     margin-bottom: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.related-card:hover {
+    background: #c9d1e4;
 }
 
 .related-card h4 {

@@ -21,18 +21,53 @@ var move_page = function(int_offset) {
 
 {% block content %}
 <div id="main-header">
-    <h1><span class="title-first">Wyszukiwarka</span><br><span class="title-second">publikacji</span></h1>
-    <form action="/" method="get" class="search-form">
-        <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input type="text" name="q" placeholder="Wyszukaj słowo kluczowe, autora lub tytuł..." id="search-bar">
-            <button type="submit" id="search-btn">Wyszukaj</button>
-        </div>
+    <h1><span class="title-first">Research Papers</span><br><span class="title-second">Search Engine</span></h1>
+    <form action="/" method="post" class="search-form" enctype="multipart/form-data">
+        <center>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" placeholder="Find keyword, author, SMILES or title..." id="search-bar">
+                <button type="submit" id="search-btn">Search</button>
+                <select name="rank" id="rank_select">
+                    <option value="search" {{ gvars.rank == 'search' and 'selected' }}>keyword</option>
+                    <option value="tags" {{ gvars.rank == 'tags' and 'selected' }}>tag</option>
+                    <option value="pid" {{ gvars.rank == 'pid' and 'selected' }}>pid</option>
+                    <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>SMILES</option>
+                    <option value="image" {{ gvars.rank == 'image' and 'selected' }}>image</option>
+                    <option value="random" {{ gvars.rank == 'random' and 'selected' }}>random</option>
+                </select>
+            </div>
+            <div id="cbox_fast">
+                Shortcuts:
+                <a href="/?rank=tags&tags=all&time_filter=7&skip_have=yes">recommend over last week</a>
+                <a href="/?rank=tags&tags=all&time_filter=3&skip_have=yes">recommend over last 3 days</a>
+                <a href="/?rank=time">recent</a>
+                <a href="/?rank=random&time_filter=7">random last week</a>
+            </div>
+            <br />
+            <div class="search-container" id="image_search_window" style="display: none;">
+                <p>
+                    <b>Image search:</b>
+                    &emsp;<input name="image_input" type="file" id="image_input" accept="image/*">
+                </p>
+            </div>
+            <script>
+                var rankSelect = document.getElementById('rank_select');
+                rankSelect.onchange = (event) => {
+                    if(rankSelect.value == "image")
+                    {
+                        document.getElementById('image_search_window').style.display = 'block';
+                    } else {
+                        document.getElementById('image_search_window').style.display = 'none';
+                    }
+                }
+            </script>
+        </center>
     </form>
 </div>
 
 <div id="recommended-section">
-    <h2>Polecane publikacje</h2>
+    <h2>Recommended papers</h2>
     <div id="cards">
         {% for paper in papers[:8] %}
         <a href="/inspect?pid={{ paper.id }}" class="card">

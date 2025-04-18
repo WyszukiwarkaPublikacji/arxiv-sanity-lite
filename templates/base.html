@@ -5,6 +5,19 @@
     <meta charset="UTF-8">
     <title>Wyszukiwarka publikacji</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
 </head>
 
 
@@ -12,9 +25,11 @@
 <div id="header">
     <a href="/" id="home-link">📄</a>
     <div id="right-nav">
-        <a href="/stats">Statystyki</a>
-        <a href="/profile">Moje konto</a>
+        <a href="/stats">Stats</a>
+        <a href="/profile">My account</a>
+        {% if user %}
         <a href="/settings">⚙️</a>
+        {% endif %}
     </div>
 </div>
 
