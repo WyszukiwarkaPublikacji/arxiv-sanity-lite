@@ -1,7 +1,7 @@
 import sys
 import os
 import sqlalchemy as db_alchemy
-from sqlalchemy import Table, Column, Integer, BigInteger, String, Text, Boolean, DateTime, LargeBinary, ForeignKey, MetaData, func
+from sqlalchemy import Table, Column, Integer, BigInteger, String, Text, Boolean, DateTime, LargeBinary, JSON, ForeignKey, MetaData, func
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -36,9 +36,9 @@ UserSearches = Table('user_searches', metadata,
 SavedFolders = Table('saved_folders', metadata,
     Column('id', BigInteger, primary_key=True),
     Column('name', String(30), nullable=False),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False)
+    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
+    Column('notifications_set', Boolean, default=False, nullable=False)
 )
-
 Publications = Table('publications', metadata,
     Column('id', BigInteger, primary_key=True),
     Column('arxiv_id', String(10), nullable=False),
@@ -89,6 +89,18 @@ SavedPublications = Table('saved_publications', metadata,
     Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False)
 )
 
+Notifications = Table('notifications', metadata,
+    Column('id', Integer, primary_key=True, autoincrement=True),
+    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
+    Column('folder_id', BigInteger, ForeignKey('saved_folders.id'), nullable=False),
+    Column('publication_ids', JSON, nullable=False),  
+    Column('status', String(20), default='ready', nullable=False),  # 'ready' or 'sent'
+    Column('generated_at', DateTime, server_default=func.now(), nullable=False),
+    Column('sent_at', DateTime, nullable=True), 
+    Column('deleted', Boolean, default=False, nullable=False),
+    Column('deleted_at', DateTime, nullable=True)
+)
+
 LikedPublications = Table('liked_publications', metadata,
     Column('id', BigInteger, primary_key=True),
     Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
@@ -137,4 +149,3 @@ def main():
 
 if __name__ == '__main__':
   main()
-
