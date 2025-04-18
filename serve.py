@@ -356,20 +356,11 @@ def inspect():
     context['words'] = words
     context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector. This is the actual summary that feeds into the SVM to power recommendations, so hopefully it is good and representative!"
     context['similar_papers'] = similar_papers
+    context['folders'] = list(get_tags().keys())
+
     return render_template('inspect.html', **context)
 
-@app.route('/profile')
-def profile():
-    context = default_context()
-    with get_email_db() as edb:
-        email = edb.get(g.user, '')
-        context['email'] = email
-    tags = get_tags()
-    rtags = [{'name':t, 'n':len(pids)} for t, pids in tags.items()]
-    if rtags:
-        rtags.append({'name': 'all'})
-        context['tags'] = rtags
-    return render_template('profile.html', **context)
+
 
 @app.route('/stats')
 def stats():
@@ -419,6 +410,90 @@ def settings():
     }
 
     return render_template('settings.html', **context)
+
+
+
+@app.route('/profile')
+def profile():
+    context = default_context()
+    with get_email_db() as edb:
+        email = edb.get(g.user, '')
+        context['email'] = email
+    tags = get_tags()
+    rtags = [{'name':t, 'n':len(pids)} for t, pids in tags.items()]
+    if rtags:
+        rtags.append({'name': 'all'})
+        context['tags'] = rtags
+    context['folders'] = [{'name': t, 'count': len(pids)} for t, pids in tags.items()]
+    return render_template('profile.html', **context)
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/add_to_folder/<folder>/<pid>')
+def add_to_folder(folder, pid):
+    if g.user is None:
+        return "error, not logged in", 401
+
+    with get_tags_db(flag='c') as tags_db:
+        if g.user not in tags_db:
+            tags_db[g.user] = {}
+
+        user_tags = tags_db[g.user]
+        user_tags.setdefault(folder, set()).add(pid)
+        tags_db[g.user] = user_tags
+
+    return redirect(url_for('profile'))
+
+
+
+
+@app.route('/remove_from_folder/<folder>/<pid>')
+def remove_from_folder(folder, pid):
+    if g.user is None:
+        return "error, not logged in", 401
+
+    with get_tags_db(flag='c') as tags_db:
+        user_tags = tags_db.get(g.user, {})
+        if folder in user_tags and pid in user_tags[folder]:
+            user_tags[folder].remove(pid)
+            if not user_tags[folder]:
+                del user_tags[folder]
+            tags_db[g.user] = user_tags
+
+    return redirect(url_for('profile'))
+
+
+
+@app.route('/profile/bookmarks/<folder>')
+def view_folder(folder):
+    context = default_context()
+    tags = get_tags()
+    if folder not in tags:
+        return "folder not found", 404
+
+    pids = list(tags[folder])
+    papers = [ render_pid(pid) for pid in pids ]
+    context.update({
+        'current_folder': folder,
+        'papers': papers
+    })
+    return render_template('folder.html', **context)
+
+
+
+
+
+
+
 
 
 

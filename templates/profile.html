@@ -39,21 +39,17 @@
   </section>
 
   <section class="bookmarks-section">
-    <h2>Your bookmarks</h2>
-    <div class="card-grid">
-      {% for i in range(4) %}
-      <div class="card">
-        <h3>Super Smart Article No. {{ i+1 }}</h3>
-        <div class="tags">
-          <span class="tag chemia">Chemistry</span>
-          <span class="tag fizyka">Physics</span>
-        </div>
-        <p class="author">K. Hålfen Dahlberg</p>
-        <p class="date">📅 03.2022</p>
-      </div>
+    <h2>Your bookmark folders</h2>
+    <div class="folder-grid">
+      {% for folder in folders %}
+        <a href="{{ url_for('view_folder', folder=folder.name) }}" class="folder-card">
+          <h3>{{ folder.name }}</h3>
+          <p>{{ folder.count }} publikacji</p>
+        </a>
       {% endfor %}
     </div>
   </section>
+  
   <script>
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       window.location = "{{ url_for('logout') }}";

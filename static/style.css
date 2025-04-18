@@ -613,3 +613,140 @@ body.focus-mode #cards {
     margin-top: 5px;
 }
 
+
+
+
+.folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .folder-card {
+    display: block;
+    background: #fdf9f6;
+    border-radius: 12px;
+    padding: 16px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  .folder-card:hover {
+    transform: translateY(-3px);
+  }
+  .folder-card h3 { margin: 0 0 .5em; }
+  .folder-card p { margin: 0; color: #666; }
+  
+
+
+
+  .folder-card.add-new-folder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6a7ff5;
+    font-weight: 600;
+    background: #eef2ff;
+    border: 1px dashed #6a7ff5;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.folder-card.add-new-folder:hover {
+    background: #dde4ff;
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+.folder-card.add-new-folder .plus-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.folder-card.add-new-folder .add-text {
+    font-size: 1rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.sidebar-section .folder-section {
+    background: #fdf9f6;
+    border-radius: 15px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.sidebar-section .folder-section label {
+    display: block;
+    font-weight: bold;
+    color: #455d86;
+    margin-bottom: 8px;
+}
+
+.sidebar-section .folder-section select,
+.sidebar-section .folder-section input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin: 10px 0 10px 0;
+    box-sizing: border-box;
+}
+
+.sidebar-section .folder-section .btn {
+    display: inline-block;
+}
+
+.sidebar-section .abstract-section {
+    background: #fdf9f6;
+    border-radius: 15px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.sidebar-section .abstract-section h3 {
+    font-size: 20px;
+    color: #455d86;
+    margin-bottom: 12px;
+}
+
+.sidebar-section .abstract-section p {
+    line-height: 1.6;
+    color: #555;
+}
+
+.sidebar-section .abstract-section .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+
+.sidebar-section .folder-section select option[value="__new__"] {
+    font-weight: 600;
+    color: #6a7ff5;
+    background-color: #eef2ff;
+}
+
+.sidebar-section .folder-section select:focus option[value="__new__"],
+.sidebar-section .folder-section select:hover option[value="__new__"] {
+    background-color: #eef2ff;
+}

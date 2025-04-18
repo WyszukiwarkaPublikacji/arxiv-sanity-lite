@@ -1,16 +1,6 @@
 {% extends "base.html" %}
 
-{% block variables %}
-<script>
-var paper = {{ paper | tojson }};
-var words = {{ words | tojson }};
-var words_desc = {{ words_desc | tojson }};
-</script>
-{% endblock %}
-
 {% block content %}
-
-
 <main class="main-container">
     <section class="article-section">
         <div class="article-header">
@@ -21,15 +11,32 @@ var words_desc = {{ words_desc | tojson }};
     </section>
 
     <aside class="sidebar-section">
+        <!-- Authors and publication date -->
+
         <div class="author-box">
             <h2>{{ paper.authors }}</h2>
-            <div class="date">{{ paper.time }}</div>
-            <p><a class="option" href="#">Add tag</a> &emsp; 
-            {% if 'bookmarked' not in paper.utags %}
-                <a class="option" href="add/{{ paper.id }}/bookmarked">Add bookmark</a></p>
-            {% else %}
-                <a class="option" href="sub/{{ paper.id }}/bookmarked">Remove bookmark</a></p>
-            {% endif %}
+            <div class="date">📅 {{ paper.time }}</div>
+        </div>
+
+        
+        <div class="folder-section author-box">
+            <p>
+              <label>Dodaj do folderu:
+                <select id="folder-select">
+                  <option value=""></option>
+                  {% for folder in folders %}
+                    <option value="{{ folder }}">{{ folder }}</option>
+                  {% endfor %}
+                  <option value="__new__">New folder</option>
+                </select>
+              </label>
+              <input type="text" id="new-folder-name" placeholder="Nazwa folderu" style="display:none" />
+              <button id="add-to-folder-btn" class="btn">Dodaj</button>
+            </p>
+        </div>
+
+
+        <div class="abstract-section author-box">
             <h3>Abstract</h3>
             <p>{{ paper.summary }}</p>
             <div class="tags">
@@ -42,10 +49,12 @@ var words_desc = {{ words_desc | tojson }};
             </div>
         </div>
 
+        
+
         <div class="related-articles">
             <h3>Similar papers</h3>
             {% for sim_paper in similar_papers %}
-            <div class="related-card" onClick="window.location.href = '?pid={{ sim_paper.id }}';">
+            <div class="related-card" onClick="window.location.href='?pid={{ sim_paper.id }}';">
                 <h4>{{ sim_paper.title }}</h4>
                 <p>Autorzy: {{ sim_paper.authors }}</p>
                 <div class="tags">
@@ -61,4 +70,18 @@ var words_desc = {{ words_desc | tojson }};
         </div>
     </aside>
 </main>
+
+<script>
+  const sel = document.getElementById('folder-select');
+  const input = document.getElementById('new-folder-name');
+  sel.addEventListener('change', () => {
+    input.style.display = sel.value === '__new__' ? 'inline-block' : 'none';
+  });
+  document.getElementById('add-to-folder-btn').onclick = () => {
+    let folder = sel.value;
+    if (folder === '__new__') folder = input.value.trim();
+    if (!folder) { alert('Podaj nazwę folderu'); return; }
+    window.location = "/add_to_folder/" + encodeURIComponent(folder) + "/{{ paper.id }}";
+  };
+</script>
 {% endblock %}

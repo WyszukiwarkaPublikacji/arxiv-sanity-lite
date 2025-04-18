@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <h2>Folder: {{ current_folder }}</h2>
+    <div class="card-grid">
+      {% for paper in papers %}
+        <a href="{{ url_for('inspect') }}?pid={{ paper.id }}" class="card">
+          <h3>{{ paper.title }}</h3>
+          <p class="author">{{ paper.authors }}</p>
+          <p class="date">📅 {{ paper.time }}</p>
+        </a>
+      {% endfor %}
+    </div>
+    <p><a href="{{ url_for('profile') }}">&larr; Wróć do listy folderów</a></p>
+  </div>
+{% endblock %}
