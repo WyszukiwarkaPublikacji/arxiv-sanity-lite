@@ -1,3 +1,6 @@
+
+# This script is not needed, because we use the snapshot from kaggle
+
 """
 This script is intended to wake up every 30 min or so (eg via cron),
 it checks for any new arxiv papers via the arxiv API and stashes
