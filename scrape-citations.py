@@ -17,16 +17,17 @@ from db.SQLLite.OrmDB import Papers
 from db.SQLLiteAlchemyInstance import SQLAlchemyInstance
 from db.Milvus.MilvusSetterDB import MilvusSetterDB
 from db.Milvus.MilvusMetaRepository import MilvusMetaRepository
+from pymilvus import connections
+
 
 
 
 def find_files(folder_path: str, ext: str):
-    print(Path(folder_path))
     return list(Path(folder_path).rglob(f'*{ext}'))
 
 
 def clear_directory(target_dir):
-    os.rmtree(target_dir)
+    shutil.rmtree(target_dir)
 
 
 def create_dir(name):
@@ -38,7 +39,6 @@ def download_arxiv_source(arxiv_id: str):
     response = requests.get(url)
     response.raise_for_status()
     with open(f"{arxiv_id}.tar.gz", "wb") as f:
-        print(str(response.content))
         f.write(response.content)
 
 
@@ -64,7 +64,7 @@ def parse_bibtex_files(bib_files):
     entries = []
     for bib_file in bib_files:
         try:
-            with bib_file.open(encoding='utf-8') as bibtex_file:                
+            with bib_file.open(encoding='utf-8') as bibtex_file:               
                 bib_database = bibtexparser.load(bibtex_file)
                 entries.extend(bib_database.entries)
         except Exception as e:
@@ -94,7 +94,9 @@ def extract_arxiv_from_entries(entries, tex_citations):
 
 
 def internet_part(ID):
+    print("[INTERNET START]", ID)
     download_arxiv_source(ID)
+    print("[INTERNET DONE]", ID)
 
 
 def cpu_part(ID):
@@ -102,7 +104,7 @@ def cpu_part(ID):
 
     create_dir(ID)
     extract_tar(f"{ID}.tar.gz", ID)
-
+    print("[EXTRACTED]", ID)
     tex_files = find_files(ID, ".tex")
     bib_files = find_files(ID, ".bib")
 
@@ -113,14 +115,15 @@ def cpu_part(ID):
             text += f.read()
     
     citation_keys = extract_citations_from_latex(text)
-
+    print("[KEYS FOUND]", ID)
     sstderr = sys.stderr
     sys.stderr = open('trash', 'w')
     entries = parse_bibtex_files(bib_files)
     sys.stderr = sstderr
-
+    print("[CITATIONS PARSED]", ID)
     arxiv = extract_arxiv_from_entries(entries, citation_keys)
     clear_directory(ID)
+    print("[CPU DONE]", ID)
 
 
     return arxiv
@@ -131,58 +134,37 @@ def scrape(ID):
     return cpu_part(ID)
 
 
-async def handle_key(key, io_executor, cpu_executor):
-    loop = asyncio.get_running_loop()
-
-    # Step 1: Download file (I/O)
-    await loop.run_in_executor(io_executor, internet_part, key)
-    print(f"[IO DONE] {key}")
-
-    # Step 2: Process file (CPU)
-    result = await loop.run_in_executor(cpu_executor, cpu_part, key)
-    print(f"[CPU DONE] {key}: {result}")
-
-    return key, result
-
-async def compute():
-    pdb = get_papers_db(flag='r')
-    keys = list(pdb.keys())
-    random.shuffle(keys)
-    N = 1
-
-    with ThreadPoolExecutor(max_workers=10) as io_pool, \
-         ProcessPoolExecutor(max_workers=4) as cpu_pool:
-
-        tasks = [handle_key(key, io_pool, cpu_pool) for key in keys[:N]]
-
-        # Process keys as they complete
-        results = {}
-        for coro in asyncio.as_completed(tasks):
-            key, result = await coro
-            results[key] = result
-
-    return results
-
-
 def main():
-    import multiprocessing
-    multiprocessing.set_start_method("spawn")  # macOS default
-
-    return asyncio.run(compute())
-
-if __name__ == '__main__':
     instance = SQLAlchemyInstance()
     engine = instance.get_engine()
 
-    MilvusSetterDB.create_collectio_metas()
-    MilvusSetterDB.create_collection_papers()
+    # MilvusSetterDB.create_collectio_metas()
+    # MilvusSetterDB.create_collection_papers()
+    connections.connect(
+        alias="default",
+        host="localhost",
+        port="19530"
+    )
+
     
-    with Session(engine) as session:
-        stmt = insert(Citations).values(id="3",origin_publication_id="username", citation_publication_id="Full Username")
-        result = session.execute(stmt)
-        repo = MilvusMetaRepository()
+        
+    pdb = get_papers_db(flag='r')
+    keys = list(pdb.keys())
 
-        for i in session.execute(select(Citations)):
-            print(i)
-       
+    for key in keys:
+        result = scrape(key)
+        for citation in result:
+            with Session(engine) as session:
+                stmt = insert(Citations).values(origin_publication_id=key, citation_publication_id=citation)
+                session.execute(stmt)
 
+
+    
+
+    
+        
+
+    
+
+if __name__ == '__main__':
+    main()

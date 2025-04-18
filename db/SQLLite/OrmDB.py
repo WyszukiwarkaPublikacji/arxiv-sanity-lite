@@ -126,14 +126,14 @@ Papers = Table('papers', metadata,
     Column('value', LargeBinary, nullable=True)
 )
 
-Citations = Table('citations', metadata,
-    Column('id', BigInteger, primary_key=True),
+Citations = Table('citations', metadata, 
+    Column('id', Integer, primary_key=True, autoincrement=True),
     Column('origin_publication_id', String(30), ForeignKey('papers.key'), nullable=False),
     Column('citation_publication_id', String(30), ForeignKey('papers.key'), nullable=False)
 )
 
 def main():
-#   metadata.drop_all(engine)
+  metadata.drop_all(engine)
   metadata.create_all(engine)
 
 if __name__ == '__main__':
