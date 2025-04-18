@@ -17,7 +17,7 @@ class MilvusMetaRepository:
         self.collection.load()
         results = self.collection.search(
             data=[query_vector],
-            anns_field="vector",
+            anns_field="value",
             param={"metric_type": "L2", "params": {"nprobe": 10}},
             limit=top_k,
             output_fields=["key"]

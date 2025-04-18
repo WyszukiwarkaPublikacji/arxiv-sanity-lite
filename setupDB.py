@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from db.SQLLite.OrmDB import Papers
 from db.SQLLiteAlchemyInstance import SQLAlchemyInstance
 from db.Milvus.MilvusSetterDB import MilvusSetterDB
-from db.Milvus.MilvusMetaRepository import MilvusMetaRepository
+from pymilvus import utility
 
 
 def main():

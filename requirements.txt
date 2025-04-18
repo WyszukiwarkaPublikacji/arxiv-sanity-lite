@@ -16,3 +16,4 @@ pymilvus==2.5.4
 psycopg2-binary==2.9.10
 Flask-SQLAlchemy==2.3.0
 SQLAlchemy==2.0.16
+torch

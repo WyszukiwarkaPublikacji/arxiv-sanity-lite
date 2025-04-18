@@ -12,7 +12,7 @@ class MilvusSetterDB:
         try:
             fields = [
                 FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
-                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=768)
+                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=100)
             ]
 
             MilvusInstance.connect_to_instance()
@@ -21,7 +21,7 @@ class MilvusSetterDB:
                 print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' already exists.")
                 return True
 
-            schema = CollectionSchema(fields, description="Similar Publications meta", auto_id=True)
+            schema = CollectionSchema(fields, description="Similar Publications meta", auto_id=False)
             collection = Collection(name=MilvusSetterDB.COLLECTION_NAME, schema=schema)
 
             index_params = {
@@ -29,7 +29,7 @@ class MilvusSetterDB:
                 "index_type": "IVF_FLAT"
             }
 
-            collection.create_index( index_params=index_params)
+            collection.create_index("value", index_params=index_params)
 
             print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' created successfully with an index!")
             return True
@@ -43,7 +43,7 @@ class MilvusSetterDB:
         try:
             fields = [
                 FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
-                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=768)
+                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=100)
             ]
 
             MilvusInstance.connect_to_instance()
@@ -52,7 +52,7 @@ class MilvusSetterDB:
                 print(f"Collection '{MilvusSetterDB.COLLECTION_NAME2}' already exists.")
                 return True
 
-            schema = CollectionSchema(fields, description="Similar Publications papers", auto_id=True)
+            schema = CollectionSchema(fields, description="Similar Publications papers", auto_id=False)
             collection = Collection(name=MilvusSetterDB.COLLECTION_NAME2, schema=schema)
 
             index_params = {
@@ -60,7 +60,7 @@ class MilvusSetterDB:
                 "index_type": "IVF_FLAT"
             }
 
-            collection.create_index(index_params=index_params)
+            collection.create_index("value", index_params=index_params)
 
             print(f"Collection '{MilvusSetterDB.COLLECTION_NAME2}' created successfully with an index!")
             return True

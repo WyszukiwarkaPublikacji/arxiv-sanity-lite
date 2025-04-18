@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import List
 from papers.paper import Paper
-from annoy import AnnoyIndex
 from aslite.db import CompressedSqliteDict
 
 class Algorithm(ABC):
-    def __init__(self, index: AnnoyIndex, papers_db: CompressedSqliteDict):
-        self.index = index
+    def __init__(self, papers_db: CompressedSqliteDict):
         self.papers_db = papers_db
     
     @abstractmethod
