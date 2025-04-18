@@ -189,19 +189,6 @@ def search_rank(q: str = ''):
     pids = [p[1] for p in pairs]
     scores = [p[0] for p in pairs]
     return pids, scores
-# Helper function to convert a list of booleans (or 0/1 integers) to bytes.
-# (Assumes that such a conversion is needed by your Milvus client.)
-def convert_bool_list_to_bytes(bool_list):
-    if len(bool_list) % 8 != 0:
-        raise ValueError("The length of a boolean list must be a multiple of 8")
-
-    byte_array = bytearray(len(bool_list) // 8)
-    for i, bit in enumerate(bool_list):
-        if bit == 1:
-            index = i // 8
-            shift = i % 8
-            byte_array[index] |= (1 << shift)
-    return bytes(byte_array)
 
 def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     client = get_embeddings_db()
@@ -210,21 +197,15 @@ def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
         raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
 
     # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
-    input_fp = calculate_embedding(input_SMILES)
-    if input_fp is None:
+    fp = calculate_embedding(input_SMILES)
+    if fp is None:
         raise ValueError("Invalid input SMILES string.")
-    print(input_SMILES)
-    # RDKit's ExplicitBitVect is iterable and yields 0/1 values.
-    bool_list = [bool(bit) for bit in input_fp]
-   
-    query_vector = convert_bool_list_to_bytes(bool_list)
-    print(query_vector)
-    #query_vector = input_fp
+
     # Run a Milvus search query using the binary vector.
     # Adjust the search "limit" as needed to capture enough SMILES entries for each paper.
     search_results = client.search(
         collection_name="chemical_embeddings",
-        data=[query_vector],
+        data=[fp],
         limit=limit,
         anns_field="chemical_embedding",
         output_fields=["paper_id", "SMILES"],
