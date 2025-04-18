@@ -77,6 +77,9 @@ var move_page = function(int_offset) {
                 {% for tag in paper.tags.split(', ') %}
                 <span class="tag">{{ tag }}</span>
                 {% endfor %}
+                {% for utag in paper.utags %}
+                <span class="tag">{{ utag }}</span>
+                {% endfor %}
             </div>
             <p class="date">📅 {{ paper.time }}</p>
         </a>

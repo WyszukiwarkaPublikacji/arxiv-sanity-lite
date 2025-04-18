@@ -24,11 +24,20 @@ var words_desc = {{ words_desc | tojson }};
         <div class="author-box">
             <h2>{{ paper.authors }}</h2>
             <div class="date">{{ paper.time }}</div>
+            <p><a class="option" href="#">Add tag</a> &emsp; 
+            {% if 'bookmarked' not in paper.utags %}
+                <a class="option" href="add/{{ paper.id }}/bookmarked">Add bookmark</a></p>
+            {% else %}
+                <a class="option" href="sub/{{ paper.id }}/bookmarked">Remove bookmark</a></p>
+            {% endif %}
             <h3>Abstract</h3>
             <p>{{ paper.summary }}</p>
             <div class="tags">
                 {% for tag in paper.tags.split(', ') %}
                     <span class="tag">{{ tag }}</span>
+                {% endfor %}
+                {% for utag in paper.utags %}
+                    <span class="tag">{{ utag }}</span>
                 {% endfor %}
             </div>
         </div>
@@ -42,6 +51,9 @@ var words_desc = {{ words_desc | tojson }};
                 <div class="tags">
                     {% for tag in sim_paper.tags.split(', ') %}
                         <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                    {% for utag in sim_paper.utags %}
+                        <span class="tag">{{ utag }}</span>
                     {% endfor %}
                 </div>
             </div>

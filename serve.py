@@ -364,6 +364,11 @@ def profile():
     with get_email_db() as edb:
         email = edb.get(g.user, '')
         context['email'] = email
+    tags = get_tags()
+    rtags = [{'name':t, 'n':len(pids)} for t, pids in tags.items()]
+    if rtags:
+        rtags.append({'name': 'all'})
+        context['tags'] = rtags
     return render_template('profile.html', **context)
 
 @app.route('/stats')

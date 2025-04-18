@@ -189,6 +189,16 @@ center {
     color: #999;
 }
 
+.option {
+    color: #6a7ff5;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.option:hover {
+    color: #999;
+}
+
 
 .main-container {
     display: flex;
@@ -330,7 +340,6 @@ center {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
 }
 
 .welcome-section {
@@ -397,7 +406,6 @@ center {
     padding: 20px 80px 0;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
     margin: 0;
     border-radius: 0 !important;
 }
