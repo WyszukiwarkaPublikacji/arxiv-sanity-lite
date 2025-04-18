@@ -84,6 +84,37 @@ center {
     color: #888;
 }
 
+
+.search-container select#rank_select {
+    background-color: #fdf9f6;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-left: 10px;
+    font-size: 16px;
+    color: #455d86;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.search-container select#rank_select:focus {
+    outline: none;
+    border-color: #6a7ff5;
+}
+
+.search-container select#rank_select option {
+    background: white;
+    color: #333;
+}
+
+.search-container select#rank_select {
+    height: 40px;
+    line-height: 1.2;
+}
+
+
+
+
 #search-bar {
     flex: 1;
     border: none;
@@ -129,7 +160,7 @@ center {
     display: inline-block;
     padding: 4px 10px;
     font-size: 14px;
-    border-radius: 15px;
+    border-radius: 10px;
     background: #6a7ff5;
     color: white;
     margin: 2px;
