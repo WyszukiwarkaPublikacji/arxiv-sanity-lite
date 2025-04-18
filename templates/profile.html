@@ -19,6 +19,8 @@
       <p>
         Here, you can modify your tags and interests, add or remove bookmarks, and enjoy browsing scientific publications.
       </p>
+      <br />
+      <button type="button" id="logout-btn" class="btn danger">Log Out</button>
     </div>
     <div class="welcome-right">
       <p class="tags-title">
@@ -49,11 +51,20 @@
       {% endfor %}
     </div>
   </section>
-
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      window.location = "{{ url_for('logout') }}";
+    });
+  </script>
   {% else %}
-  <section class="welcome-section">
+  <section class="welcome-section" style="display: block;">
     <h1>Welcome!</h1>
-    <p>Please log in to see your bookmarks.</p>
+    <p style="text-align: justify; width: 70%;">Please log in to see your bookmarks. Take into consideration that we use a super lite version of
+      "user accounts" where there are no passwords. Basically, you can "log in"
+      with any arbitrary username. If you want to share your library with a
+      friend, you can just tell them the username. And if you'd like to keep your
+      account private, just make your username be something unique
+      and write it down somewhere safe.</p>
     <form action="/login" method="POST" class="form-inline">
       <input type="text" name="username" placeholder="Username" class="form-control">
       <button type="submit" class="btn">Log In</button>

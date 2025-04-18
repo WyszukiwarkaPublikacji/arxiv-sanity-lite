@@ -341,7 +341,6 @@ center {
     background-color: #ffffff;
     padding: 60px 80px;
     align-items: center;
-    overflow-y: auto;
 }
 
 .welcome-left h1 {
@@ -598,11 +597,11 @@ body.focus-mode #cards {
 
 
 #logout-btn {
-    margin: 5px;
+    margin-top: 5px;
 }
 
 
 #save-notifications-btn {
-    margin: 5px;
+    margin-top: 5px;
 }
 
