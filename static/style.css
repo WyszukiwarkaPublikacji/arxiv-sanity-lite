@@ -750,3 +750,30 @@ body.focus-mode #cards {
 .sidebar-section .folder-section select:hover option[value="__new__"] {
     background-color: #eef2ff;
 }
+
+
+
+
+
+
+.pdf-container {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.pdf-container object {
+    width: 100%;
+    height: 80vh;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    background-color: #fdf9f6;
+}
+
+.pdf-container p {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #555;
+    margin-top: 10px;
+}
+
