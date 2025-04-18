@@ -2,19 +2,35 @@ services:
   app:
     image: aslite
     build: .
-    # command: import_snapshot
-    # command: compute_features
-    # command: decimer
-    command: server --host 0.0.0.0
     ports:
-      - "5000:5000" # web UI
+      - "8080:8080" # web UI
     environment:
       DATA_DIR: "/data"
       MILVUS_URI: "http://milvus:19530/"
     volumes:
       - "./data/db:/data"
+    depends_on:
+      - milvus
+
+  worker:
+    image: aslite
+    build: .
+    command: wait
+    # command: download [...]
+    # command: import [...]
+    # command: compute_textual
+    # command: compute_chemical
+    environment:
+      DATA_DIR: "/data"
+      MILVUS_URI: "http://milvus:19530/"
+      # only used by download.sh script:
+      DOWNLOADS_DIR: "/downloads"
+      KAGGLE_USERNAME: "changeme"
+      KAGGLE_KEY: "changeme"
+    volumes:
+      - "./data/db:/data"
       - "./data/models_cache:/root/.data/DECIMER-V2"
-      - "./downloads:/app/downloads"
+      - "./data/downloads:/downloads"
     depends_on:
       - milvus
 

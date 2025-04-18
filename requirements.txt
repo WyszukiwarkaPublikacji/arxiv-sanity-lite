@@ -19,3 +19,4 @@ decimer-segmentation==1.4.0
 pdf2image==1.17.0
 rdkit==2022.9.5
 scikit-fingerprints==1.15.0
+kaggle==1.7.4.2
