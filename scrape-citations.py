@@ -94,13 +94,11 @@ def extract_arxiv_from_entries(entries, tex_citations):
 
 
 def internet_part(ID):
-    print("[INTERNET START]", ID)
     download_arxiv_source(ID)
-    print("[INTERNET DONE]", ID)
+    print("[DOWNLOADED]", ID)
 
 
 def cpu_part(ID):
-    print("CPU START", ID)
 
     create_dir(ID)
     extract_tar(f"{ID}.tar.gz", ID)
@@ -123,13 +121,21 @@ def cpu_part(ID):
     print("[CITATIONS PARSED]", ID)
     arxiv = extract_arxiv_from_entries(entries, citation_keys)
     clear_directory(ID)
-    print("[CPU DONE]", ID)
+    print("[DONE]", ID)
 
 
     return arxiv
 
 
 def scrape(ID):
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+    with engine.connect() as session:
+        stmt = select(Citations).where(Citations.c.origin_publication_id == ID).limit(1)
+        res = session.execute(stmt)
+        if len(list(res)) > 0:
+            return []
+    
     internet_part(ID)
     return cpu_part(ID)
 
@@ -138,8 +144,8 @@ def main():
     instance = SQLAlchemyInstance()
     engine = instance.get_engine()
 
-    # MilvusSetterDB.create_collectio_metas()
-    # MilvusSetterDB.create_collection_papers()
+    MilvusSetterDB.create_collectio_metas()
+    MilvusSetterDB.create_collection_papers()
     connections.connect(
         alias="default",
         host="localhost",
@@ -154,11 +160,14 @@ def main():
     for key in keys:
         result = scrape(key)
         for citation in result:
-            with Session(engine) as session:
+            with engine.connect() as session:
                 stmt = insert(Citations).values(origin_publication_id=key, citation_publication_id=citation)
                 session.execute(stmt)
+                session.commit()
+    
 
 
+        
     
 
     

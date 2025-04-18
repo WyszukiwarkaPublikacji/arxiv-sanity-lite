@@ -6,6 +6,13 @@ A much lighter-weight arxiv-sanity from-scratch re-write. Periodically polls arx
 I am running a live version of this code on [arxiv-sanity-lite.com](https://arxiv-sanity-lite.com).
 
 ![Screenshot](screenshot.jpg)
+#### To setup
+To setup database you have to run
+1. ```docker compose up -d```
+2. ```pip install -r requirements.txt```
+3. ```python3 ORMdb.py```
+4. ```python3 setupDB.py```
+
 
 #### To run
 
@@ -19,12 +26,13 @@ python3 arxiv_daemon.py --num 2000
 if [ $? -eq 0 ]; then
     echo "New papers detected! Running compute.py"
     python3 compute.py
+    python3 scrape-citations.py
 else
     echo "No new papers were added, skipping feature computation"
 fi
 ```
 
-You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`, and then running `compute.py` to compute the tfidf features of the papers. Finally to serve the flask server locally we'd run something like:
+You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`,then running `compute.py` to compute the tfidf features of the papers and finally `scrape-citations.py` to fill database with citations. Finally to serve the flask server locally we'd run something like:
 
 ```bash
 export FLASK_APP=serve.py; flask run
