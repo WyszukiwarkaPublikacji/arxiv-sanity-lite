@@ -11,10 +11,6 @@ from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
 
-# -----------------------------------------------------------------------------
-# global configuration
-
-DATA_DIR = 'data'
 
 # -----------------------------------------------------------------------------
 # utilities for safe writing of a pickle file
@@ -101,13 +97,17 @@ flag='c': default mode, open for read/write, and creating the db/table if necess
 flag='r': open for read-only
 """
 
-MILVUS_MODE = os.getenv("MILVUS_MODE", "lite")
+# config variables
+DATA_DIR = os.environ.get("DATA_DIR", "./data/db")
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+MILVUS_URI = os.environ.get("MILVUS_URI", os.path.join(DATA_DIR, "embeddings.db"))
 
 # stores info about papers, and also their lighter-weight metadata
 PAPERS_DB_FILE = os.path.join(DATA_DIR, 'papers.db')
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, 'dict.db')
-EMBEDDING_DB_FILE = "http://localhost:19530/" if MILVUS_MODE == "standalone" else os.path.join(DATA_DIR, 'embeddings.db')
+
 def get_papers_db(flag='r', autocommit=True):
     assert flag in ['r', 'c']
     pdb = CompressedSqliteDict(PAPERS_DB_FILE, tablename='papers', flag=flag, autocommit=autocommit)
@@ -151,7 +151,7 @@ def setup_chemical_embeddings_collection(client: MilvusClient):
     )
 
 def get_embeddings_db():
-    client = MilvusClient(EMBEDDING_DB_FILE)
+    client = MilvusClient(MILVUS_URI)
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)
     return client
