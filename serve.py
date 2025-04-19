@@ -26,7 +26,7 @@ from aslite.db import load_features
 # -----------------------------------------------------------------------------
 # inits and globals
 
-RET_NUM = 25 # number of papers to return per page
+RET_NUM = 8 # number of papers to return per page
 
 app = Flask(__name__)
 
@@ -313,7 +313,8 @@ def main():
     context['gvars']['pid'] = opt_pid
     context['gvars']['time_filter'] = opt_time_filter
     context['gvars']['skip_have'] = opt_skip_have
-    context['gvars']['search_query'] = opt_q
+    #context['gvars']['search_query'] = opt_q
+    context['gvars']['search_query'] = request.form.get('q', '')
     context['gvars']['svm_c'] = str(C)
     context['gvars']['page_number'] = str(page_number)
     return render_template('index.html', **context)

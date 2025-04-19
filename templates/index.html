@@ -26,7 +26,7 @@ var move_page = function(int_offset) {
         <center>
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" name="q" placeholder="Find keyword, author, SMILES or title..." id="search-bar">
+                <input type="text" name="q" placeholder="Find keyword, author, SMILES or title..." id="search-bar" value="{{ gvars.search_query }}">
                 <button type="submit" id="search-btn">Search</button>
                 <select name="rank" id="rank_select">
                     <option value="search" {{ gvars.rank == 'search' and 'selected' }}>keyword</option>
@@ -67,7 +67,11 @@ var move_page = function(int_offset) {
 </div>
 
 <div id="recommended-section">
+    {% if papers|length > 0 %}
     <h2>Recommended papers</h2>
+    {% else %}
+    <h2>No results for your query</h2>
+    {% endif %}
     <div id="cards">
         {% for paper in papers[:8] %}
         <a href="/inspect?pid={{ paper.id }}" class="card">

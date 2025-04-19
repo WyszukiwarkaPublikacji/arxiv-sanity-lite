@@ -252,6 +252,7 @@ center {
 
 .pdf-download {
     float: right;
+    margin-left: 10px;
     text-decoration: none;
     font-size: 16px;
     color: #6a7ff5;
