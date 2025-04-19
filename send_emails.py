@@ -1,12 +1,34 @@
-from datetime import datetime
-import sendgrid
-import os
-import json
-from flask import render_template_string, Flask
-from sendgrid.helpers.mail import Content, Email, Mail, To
-from db.SQLLite.OrmDB import Users, Notifications, engine
-from sqlalchemy import select, and_, update
+"""
+This script sends emails (one mail per user) with notifications generated for users in generate_notification.py. 
+Content of notification is based on saved publications
+in their notification-enabled folders.
 
+Configuration Requirements:
+SendGrid API Key:
+Create a file named 'sendgrid_api_key.txt' in the project root
+Place your own SendGrid API key there
+
+Sender Email:
+set from_email in send_email to your own sender email configured in sendgrid
+"""
+
+
+
+
+import json
+import os
+from datetime import datetime
+
+import sendgrid
+from flask import Flask, render_template_string
+from sendgrid.helpers.mail import Content, Email, Mail, To
+from sqlalchemy import and_, select, update
+
+from db.SQLLite.OrmDB import Notifications, Users, engine
+
+# Sender email
+SENDER_EMAIL = "wyszukiwarka@gmail.com"
+# Flask for rendering html templates
 app = Flask(__name__)
 
 def generate_mail_for_user(user_id: int):
@@ -77,7 +99,7 @@ def send_email(to, html, date):
     api_key = open('sendgrid_api_key.txt', 'r').read().strip()
 
     sg = sendgrid.SendGridAPIClient(api_key=api_key) 
-    from_email = Email("wyszukiwarka@gmail.com")
+    from_email = Email(f"{SENDER_EMAIL}")
     to_email = To(to)
     subject = date + " notification"
     content = Content("text/html", html)

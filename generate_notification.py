@@ -4,6 +4,12 @@ from datetime import datetime
 import json
 
 def get_publications(folder_id: int): 
+    """
+    Tymczasowa funkcja, docelowo powinna korzystac z algorytmu znajdywania podobnych publikacji w folderach 
+    i zwracac liste najswiezszych sposrod wybranych przez algorytm publikacji
+
+    obecnie funkcja wybiera pierwsze 4 publikacje w folderze
+    """
     with engine.connect() as connection:
         query = select(SavedPublications.c.publication_id).where(
             SavedPublications.c.folder_id == folder_id
@@ -82,7 +88,7 @@ if __name__ == "__main__":
                         
                         tnow = datetime.now()
                         
-                        # chamskie genereowanie nastepnego id bo autoincrement Notifications.id nie dziala na nowej wersji Orm i dopiero do ogarnalem, program dzialaby bez tej funkcji gdyby autoincrement dzialal
+                        # chamskie genereowanie nastepnego id bo autoincrement Notifications.id nie dziala na nowej wersji Orm i dopiero to ogarnalem, program dzialaby bez tej funkcji gdyby autoincrement dzialal
                         next_id = get_next_notification_id(connection)
                         
                         insert_stmt = Notifications.insert().values(
