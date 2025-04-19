@@ -14,10 +14,10 @@
 
     <!-- General settings -->
     <div class="tab-content" id="tab-general">
-      <form id="settings-form">
+      <form id="settings-form" method="post" action="{{ url_for('change_settings') }}">
         <div class="form-group">
           <label>
-            <input type="checkbox" id="focus-mode-toggle">
+            <input type="checkbox" id="focus-mode-toggle" name="focus-mode-toggle" value="1" {% if session['focus_mode'] == 1 %}checked{% endif %}>
             Enable Focus Mode
           </label>
           <p class="help-text">Focus Mode hides unnecessary metadata when You read the paper.</p>
@@ -29,6 +29,7 @@
             Hide papers I’ve already saved
           </label>
         </div>
+        <button type="submit" id="save-notifications-btn" class="btn">Change settings</button>
       </form>
     </div>
 

@@ -19,6 +19,7 @@
         </div>          
     </section>
 
+    {% if session['focus_mode'] != 1 %}
     <aside class="sidebar-section">
         <!-- Authors and publication date -->
 
@@ -78,6 +79,7 @@
             {% endfor %}
         </div>
     </aside>
+    {% endif %}
 </main>
 
 <script>

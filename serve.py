@@ -620,4 +620,17 @@ def register_email():
             with get_email_db(flag='c') as edb:
                 edb[g.user] = email
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('settings'))
+
+
+@app.route('/change_settings', methods=['POST'])
+def change_settings():
+    if 'focus-mode-toggle' in request.form:
+        if request.form['focus-mode-toggle'] == '1':
+            session['focus_mode'] = 1
+        else:
+            session['focus_mode'] = 0
+    else:
+        session['focus_mode'] = 0
+
+    return redirect(url_for('settings'))

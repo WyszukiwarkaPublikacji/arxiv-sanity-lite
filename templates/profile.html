@@ -40,7 +40,7 @@
       {% for folder in folders %}
         <a href="{{ url_for('view_folder', folder=folder.name) }}" class="folder-card">
           <h3>{{ folder.name }}</h3>
-          <p>{{ folder.count }} publikacji</p>
+          <p>{{ folder.count }} papers</p>
         </a>
       {% endfor %}
     </div>
