@@ -17,20 +17,16 @@
     <div class="welcome-left">
       <h1>Welcome, {{ user }}!</h1>
       <p>
-        Here, you can modify your tags and interests, add or remove bookmarks, and enjoy browsing scientific publications.
+        Here, you can modify your bookmarks, and enjoy browsing scientific publications.
       </p>
       <br />
       <button type="button" id="logout-btn" class="btn danger">Log Out</button>
     </div>
     <div class="welcome-right">
       <p class="tags-title">
-        Your tags and interests <a href="#" class="edit-tags-link">[edit]</a>:
+        Your bookmarks:
       </p>
       <div class="tag-badges">
-        <span class="tag astronomia">🔭 Astronomy</span>
-        <span class="tag informatyka">💻 Computer Science</span>
-        <span class="tag fizyka">⚛️ Physics</span>
-        <span class="tag chemia">⚗️ Chemistry</span>
         {% for customtag in tags %}
         <span class="tag">{{ customtag.name }}&nbsp;<a style="text-decoration: none; color: inherit;" href="del/{{ customtag.name }}">×</a></span>
         {% endfor %}

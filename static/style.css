@@ -425,11 +425,6 @@ center {
     background-color: #e0e0e0;
 }
 
-.tag.astronomia { background-color: #f7d6f5; }
-.tag.informatyka { background-color: #d7d4fc; }
-.tag.fizyka { background-color: #c8e8e5; }
-.tag.chemia { background-color: #fde2b6; }
-
 
 .bookmarks-section {
     flex: 1;

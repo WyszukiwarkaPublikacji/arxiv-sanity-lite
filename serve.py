@@ -584,7 +584,7 @@ def delete_tag(tag=None):
         tags_db[g.user] = d
 
     print("deleted tag %s for user %s" % (tag, g.user))
-    return "ok: " + str(d) # return back the user library for debugging atm
+    return redirect(url_for('profile'))
 
 # -----------------------------------------------------------------------------
 # endpoints to log in and out

@@ -7,9 +7,10 @@
             <h1>{{ paper.title }}</h1>
             <a href="https://arxiv.org/pdf/{{ paper.id }}" target="_blank" class="pdf-download">Download PDF (arxiv)</a>
         </div>
+        <br />
         <div class="pdf-container">
             <object 
-              data="https://arxiv.org/pdf/{{ paper.id }}#zoom=200" 
+              data="https://arxiv.org/pdf/{{ paper.id }}" 
               type="application/pdf">
               <p>Twoja przeglądarka nie obsługuje podglądu PDF. 
                  <a href="https://arxiv.org/pdf/{{ paper.id }}">Kliknij, aby pobrać</a>.

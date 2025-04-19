@@ -2,8 +2,11 @@
 
 {% block content %}
   <div class="container">
-    <h2>Folder: {{ current_folder }}</h2>
-    <div class="card-grid">
+    <h2 style="text-align: center;">Folder: {{ current_folder }}</h2>
+    <p style="text-align: center;"><a href="{{ url_for('profile') }}">&larr; Back to the list</a></p>
+    <br />
+    <br />
+    <div class="card-grid" style="width: 90%; margin-left: 5%;">
       {% for paper in papers %}
         <a href="{{ url_for('inspect') }}?pid={{ paper.id }}" class="card">
           <h3>{{ paper.title }}</h3>
@@ -12,6 +15,5 @@
         </a>
       {% endfor %}
     </div>
-    <p><a href="{{ url_for('profile') }}">&larr; Wróć do listy folderów</a></p>
   </div>
 {% endblock %}
