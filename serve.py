@@ -192,9 +192,6 @@ def search_rank(q: str = ''):
 
 def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
     client = get_embeddings_db()
-    collection_name = "chemical_embeddings"
-    if not client.has_collection(collection_name):
-        raise Exception("Collection: 'chemical_embeddings', was not found in Milvus database.")
 
     # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
     fp = calculate_embedding(input_SMILES)
