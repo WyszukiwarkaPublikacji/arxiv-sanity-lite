@@ -15,8 +15,11 @@ def convert_bool_list_to_bytes(bool_list):
             byte_array[index] |= (1 << shift)
     return bytes(byte_array)
 
-def calculate_embedding(smiles: str) -> np.ndarray:
-    emb = RDKitFingerprint(fp_size=config.chemical_embedding_size).transform([smiles])[0]
+def calculate_embedding(smiles: str) -> np.ndarray | None:
+    try:
+        emb = RDKitFingerprint(fp_size=config.chemical_embedding_size).transform([smiles])[0]
+    except ValueError:
+        return None
     if emb is None:
         return None
     return convert_bool_list_to_bytes(emb)

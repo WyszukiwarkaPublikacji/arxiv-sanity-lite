@@ -1,15 +1,17 @@
-import requests
-import pdf2image  
-from PIL import Image
-import numpy as np
 import logging
-import decimer_segmentation 
+
 import DECIMER
-from aslite.fingerprint import calculate_embedding
+import decimer_segmentation
+import numpy as np
+import pdf2image
 import rdkit.Chem
-from aslite.db import EmbeddingsDB, get_papers_db
-from aslite import config
+import requests
+from PIL import Image
 from pymilvus import MilvusClient
+
+from aslite import config
+from aslite.db import EmbeddingsDB, get_papers_db
+from aslite.fingerprint import calculate_embedding
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,9 +24,7 @@ def get_pdf_url(id_: str, source: str = "arxiv") -> str:
     if source == "arxiv":
         return f"https://arxiv.org/pdf/{id_}"
     elif source == "chemrxiv":
-        r = requests.get(
-            f"https://chemrxiv.org/engage/chemrxiv/public-api/v1/items/{id_}"
-        )
+        r = requests.get(f"https://chemrxiv.org/engage/chemrxiv/public-api/v1/items/{id_}")
         r.raise_for_status()
         return r.json()["asset"]["original"]["url"]
     else:
@@ -36,14 +36,11 @@ def download_pdf_as_images(url: str) -> list[np.ndarray]:
     r.raise_for_status()
     images = pdf2image.convert_from_bytes(r.content)
     images = [np.array(img) for img in images]
-    del r
     return images
 
 
 def detect_chemical_structures(img: np.ndarray) -> list[np.ndarray]:
-    return decimer_segmentation.segment_chemical_structures(
-        img, expand=False, visualization=False
-    )
+    return decimer_segmentation.segment_chemical_structures(img, expand=False, visualization=False)
 
 
 def validate_smiles(smiles: str) -> bool:
@@ -59,10 +56,14 @@ def predict_smiles(
     confidence = np.mean(np.array([confidence for token, confidence in tokens]))
     return smiles, confidence
 
-def process_paper(paper: dict, confidence_threshold: float = 0.0, embedding_db: MilvusClient | None = None) -> None:
-    
+
+def process_paper(
+    paper: dict,
+    confidence_threshold: float = 0.0,
+    embedding_db: MilvusClient | None = None,
+) -> None:
+
     id_, source = paper["_id"], paper["provider"]
-    print(id_)
     logging.info("Paper %s/%s: downloading" % (source, id_))
     url = get_pdf_url(id_=id_, source=source)
     imgs = download_pdf_as_images(url)
@@ -78,10 +79,15 @@ def process_paper(paper: dict, confidence_threshold: float = 0.0, embedding_db: 
         logging.info("Paper %s/%s: extracting SMILES from detected structure %d/%d" % (source, id_, idx + 1, len(detected)))
 
         smiles_i, confidence_i = predict_smiles(img)
+        logging.info("Paper %s/%s: SMILES predicted: %f %s" % (source, id_, confidence_i, smiles_i))
         if confidence_i < confidence_threshold:
             continue
 
-        emb = calculate_embedding(smiles_i)  # TODO: try ValueError: couldnt convert smiles to fingerprint
+        emb = calculate_embedding(smiles_i)
+        if emb is None:
+            logging.info("Paper %s/%s: SMILES embedding calculation failed: %s" % (source, id_, smiles_i))
+            continue
+
         embedding_db.insert(
             collection_name="chemical_embeddings",
             data=[
@@ -94,9 +100,9 @@ def process_paper(paper: dict, confidence_threshold: float = 0.0, embedding_db: 
                 }
             ],
         )
-        logging.info("Paper %s/%s: added embedding to the DB: %f %s" % (source, id_, confidence_i, smiles_i))
+        logging.info("Paper %s/%s: added SMILES embedding to the DB: %s" % (source, id_, smiles_i))
 
-    logging.info("Paper %s/%s: finished processing." % (source, id_))
+    logging.info("Paper %s/%s: processing finished." % (source, id_))
 
 
 def start_processing():
@@ -108,10 +114,18 @@ def start_processing():
         for id_ in pdb:
             if pdb[id_]["provider"] != "chemrxiv":  # TODO: find a better criterion?
                 continue
+            print(pdb[id_], pdb[id_]["computed_chemical"])
+            if pdb[id_]["computed_chemical"]:
+                continue
             try:
                 process_paper(paper=pdb[id_], embedding_db=embedding_db)
             except Exception as err:
                 logging.error("Paper %s/%s: processing failed: %s" % (pdb[id_]["provider"], id_, repr(err)))
+            else:
+                el = pdb[id_]
+                el["computed_chemical"] = True
+                pdb[id_] = el
+
 
 if __name__ == "__main__":
     start_processing()
