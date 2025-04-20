@@ -29,6 +29,8 @@ sudo ./eztoolbox.sh run compute_chemical  #
 # Stop and remove the stack
 sudo ./eztoolbox.sh down
 ```
+
+## Running (old)
 for chemrxiv we use snapshots from the [chemrxiv-dashboard](https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io) project, and run the respective script.
 ```bash
 python3 generate_db_from_chemrxiv.py -f allchemrxiv_data.json
