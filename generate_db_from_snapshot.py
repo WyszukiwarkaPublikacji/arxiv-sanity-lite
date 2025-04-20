@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 
@@ -17,10 +18,12 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Arxiv DB generator")
-    parser.add_argument("-f", "--file", type=str, help="The file to generate db from. See download.sh script.")
+    parser.add_argument("-f", "--file", type=str, help="The file to generate db from. If not specified, '$DOWNLOADS_DIR/data/downloads/<arxiv|chemrxiv>.json' is used, where the DOWNLOADS_DIR variable defaults to current working dir.")
     parser.add_argument("-a", "--arxiv", help="The file given is from an arxiv snapshot.", action="store_true")
     parser.add_argument("-c", "--chemrxiv", help="The file given is from a chemrxiv snapshot.", action="store_true")
     args = parser.parse_args()
+
+    downloads_dir = os.environ.get("DOWNLOADS_DIR", os.path.join(os.getcwd(), "data/downloads"))
 
     pdb = get_papers_db(flag="c")
     mdb = get_metas_db(flag="c")
@@ -31,7 +34,8 @@ if __name__ == "__main__":
         logging.error("specify source format, see help for more information.")
         sys.exit(1)
     if args.arxiv:
-        with open(args.file, "r") as f:
+        filename = args.file if args.file is not None else os.path.join(downloads_dir, "arxiv.json")
+        with open(filename, "r") as f:
             flen = 0
             for _ in f:
                 flen += 1
@@ -60,7 +64,8 @@ if __name__ == "__main__":
                 pdb[enc["_id"]] = enc
                 mdb[enc["_id"]] = {"_time": enc["_time"]}
     if args.chemrxiv:
-        with open(args.file, "r") as f:
+        filename = args.file if args.file is not None else os.path.join(downloads_dir, "chemrxiv.json")
+        with open(filename, "r") as f:
             jsn = json.load(f)
         for paperid in tqdm(jsn):
             paper = jsn[paperid]

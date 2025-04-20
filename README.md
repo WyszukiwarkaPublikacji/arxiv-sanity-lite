@@ -17,8 +17,8 @@ sudo ./eztoolbox.sh run download chemrxiv
 sudo ./eztoolbox.sh run download arxiv
 
 # Import snapshots
-sudo ./eztoolbox.sh run import -c -f /downloads/chemrxiv.json
-sudo ./eztoolbox.sh run import -a -f /downloads/arxiv.json
+sudo ./eztoolbox.sh run import --chemrxiv
+sudo ./eztoolbox.sh run import --arxiv
 
 # Compute textual features
 sudo ./eztoolbox.sh run compute_textual
