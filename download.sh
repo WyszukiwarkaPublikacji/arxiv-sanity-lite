@@ -1,7 +1,7 @@
 #!/bin/sh
 
 set -e
-outdir="${DOWNLOADS_DIR:-$(pwd)/downloads}"
+outdir="${DOWNLOADS_DIR:-$(pwd)/data/downloads}"
 mkdir -p "$outdir"
 
 tmpdir="$(mktemp -d)"
