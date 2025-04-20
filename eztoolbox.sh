@@ -8,10 +8,10 @@ elif [ "$cmd" = "down" ]; then
 elif [ "$cmd" = "logs" ]; then
     shift
     docker compose logs $@
-elif [ "$cmd" = "exec" ]; then
+elif [ "$cmd" = "run" ]; then
     shift
     docker compose exec -it worker ./run.sh $@
 else
-    echo "Usage: $0 <up|down|exec> [...]"
+    echo "Usage: $0 <up|down|run> [...]"
     exit 1
 fi

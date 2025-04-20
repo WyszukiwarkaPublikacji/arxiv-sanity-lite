@@ -7,12 +7,27 @@ I am running a live version of this code on [arxiv-sanity-lite.com](https://arxi
 
 ![Screenshot](screenshot.jpg)
 
-#### To run
+## Running (Docker)
+```sh
+# Start the stack
+sudo ./eztoolbox.sh up
 
-First we need to download the papers, for arxiv we use snapshots from kaggle: [https://www.kaggle.com/datasets/Cornell-University/arxiv](https://www.kaggle.com/datasets/Cornell-University/arxiv),
-then we need to run a script to generate the db from it:
-```bash
-python3 generate_db_from_snapshot.py -f arxiv-metadata-oai-snapshot.json
+# Download snapshots
+sudo ./eztoolbox.sh run download chemrxiv
+sudo ./eztoolbox.sh run download arxiv
+
+# Import snapshots
+sudo ./eztoolbox.sh run import -c -f /downloads/chemrxiv.json
+sudo ./eztoolbox.sh run import -a -f /downloads/arxiv.json
+
+# Compute textual features
+sudo ./eztoolbox.sh run compute_textual
+
+# Compute chemical features (structures detection and fingerprinting). Takes a lot time, but Ctrl+C is your friend
+sudo ./eztoolbox.sh run compute_chemical  # 
+
+# Stop and remove the stack
+sudo ./eztoolbox.sh down
 ```
 for chemrxiv we use snapshots from the [chemrxiv-dashboard](https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io) project, and run the respective script.
 ```bash
