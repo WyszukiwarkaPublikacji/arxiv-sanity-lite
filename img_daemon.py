@@ -73,24 +73,19 @@ def delete_ids(client, idb, arxiv_ids) -> None:
         client.delete("images_collection", to_delete)
         
         
-def save_figures(idb, ids, data):
-    seen_ids = set()
-    
+def save_figures(idb, ids, data):    
     for id, (arxiv_id, caption, figure) in zip(ids, data):
         base_id, version = split_id(arxiv_id)
         fig_path = get_image_path(id)
         cv2.imwrite(fig_path, figure[..., ::-1])
 
         idb[id] = dict(base_id=base_id, version=version, caption=caption)
-        seen_ids.add(arxiv_id)
-        
-    return seen_ids
 
 
-def data_dicts(ids, caption_embeddings, chart_embeddings):
+def data_dicts(ids, caption_embeddings, image_embeddings):
     return [
-        dict(id=id, chart_embedding=x, caption_embedding=y) for
-        id, x, y in zip(ids, chart_embeddings, caption_embeddings)
+        dict(id=id, image_embedding=x, caption_embedding=y) for
+        id, x, y in zip(ids, image_embeddings, caption_embeddings)
     ]
 
 
@@ -123,7 +118,11 @@ async def fetch_papers(arxiv_ids, q, max_concurrency) -> None:
     bar.close()
 
 
-def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:    
+def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None:    
+    from pyinstrument import Profiler
+    profiler = Profiler()
+    profiler.start()
+    
     last_id = get_last_id(idb)
     stream = PageStream(
         q, 
@@ -135,22 +134,22 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:
     # keep track of processed ids - some can appear in more than one batch
     processed_ids = set()
 
-    for batch in stream:
+    for collected_ids, batch in stream:
         try:
             arxiv_ids, renders, blocks = zip(*batch)
             out = extractor(arxiv_ids, renders, blocks, verbose=False)
+            
+            # when we receive an arxiv_id we can be sure it was 
+            # processed even if it appear in more than one batch
+            remove_pdfs_by_ids(collected_ids)
+            processed_ids.update(collected_ids)
 
             if not out:
                 logging.info("no figures found. skipping...")
                 continue
             
             new_ids = list(range(last_id, last_id + len(out)))
-            new_processed = save_figures(idb, new_ids, out)
-            
-            # when we receive an arxiv_id we can be sure it was 
-            # processed even if it appear in more than one batch
-            remove_pdfs_by_ids(new_processed)
-            processed_ids.update(new_processed)
+            save_figures(idb, new_ids, out)
             
             _, captions, figures = zip(*out)
             embeddings = vectorizer(
@@ -166,10 +165,13 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:
             last_id += len(out)               
             
             logging.info("added %d figures" % len(out))
-            logging.info("processed %d/%d" % (len(processed_ids), num_ids))
+            logging.info("processed %d/%d files" % (len(processed_ids), total_ids))
                 
         except Exception as e:
             logging.warning("Exception while processing: %s" % e)
+    
+    profiler.stop()
+    profiler.print()
             
 
 if __name__ == "__main__":
@@ -180,13 +182,7 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Extract images")
-    parser.add_argument(
-        "-n",
-        "--num",
-        type=int,
-        default=100,
-        help="Up to how many papers to extract from",
-    )
+    parser.add_argument("-n", "--num", type=int, default=100, help="Up to how many papers to extract from")
     args = parser.parse_args()
     print(args)
 
@@ -200,12 +196,7 @@ if __name__ == "__main__":
     ids_to_update = ids_to_update[:args.num]
     delete_ids(edb, idb, ids_to_update)
 
-    q = Queue()
-    
-    # for file in os.listdir('tmp'):
-    #     id = file.removesuffix('.pdf')
-    #     q.put(id)
-    
+    q = Queue()    
     extractor, vectorizer = load_models()
 
     t = threading.Thread(

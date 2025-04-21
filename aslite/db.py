@@ -107,7 +107,7 @@ flag='r': open for read-only
 DATA_DIR = os.environ.get("DATA_DIR", "./data/db")
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
-MILVUS_URI = os.environ.get("MILVUS_URI", os.path.join(DATA_DIR, "embeddings.db"))
+MILVUS_PATH = os.environ.get("MILVUS_PATH", os.path.join(DATA_DIR, "embeddings.db"))
 
 # stores info about papers, and also their lighter-weight metadata
 PAPERS_DB_FILE = os.path.join(DATA_DIR, "papers.db")
@@ -190,9 +190,9 @@ def setup_image_embeddings_collection(client: MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True)
     schema.add_field(
-        field_name="chart_embedding",
+        field_name="image_embedding",
         datatype=DataType.FLOAT_VECTOR,
-        dim=config.chart_embedding_size,
+        dim=config.image_embedding_size,
     )
     schema.add_field(
         field_name="caption_embedding",
@@ -203,9 +203,9 @@ def setup_image_embeddings_collection(client: MilvusClient):
     index_params = client.prepare_index_params()
 
     index_params.add_index(
-        field_name="chart_embedding",
+        field_name="image_embedding",
         index_type=config.images_index_type,
-        metric_type=config.chart_metric_type,
+        metric_type=config.image_metric_type,
     )
 
     index_params.add_index(
@@ -223,7 +223,7 @@ def setup_image_embeddings_collection(client: MilvusClient):
 
 
 def get_embeddings_db():
-    client = MilvusClient(MILVUS_URI)
+    client = MilvusClient(MILVUS_PATH)
 
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)

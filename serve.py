@@ -150,7 +150,7 @@ def render_iid(iid):
     arxiv_id = d["base_id"]
     if d["version"] > 0:
         arxiv_id += "v" + d["version"]
-
+    
     return dict(weight=0.0, id=arxiv_id, path=url, caption=d["caption"])
 
 
@@ -296,14 +296,14 @@ def image_rank(q: str, img: Image.Image):
     client = get_embeddings()
     
     if isinstance(img, np.ndarray) and q:
-        text_emb, chart_emb = vectorizer([img], [q])
-        res = hybrid_search(client, chart_emb, text_emb)
+        text_emb, image_emb = vectorizer([img], [q])
+        res = hybrid_search(client, image_emb, text_emb)
     elif q:
         text_emb = vectorizer.text_embedding([q]).cpu().tolist()
         res = client.search("images_collection", text_emb, anns_field="caption_embedding")
     else:
-        chart_emb = vectorizer.chart_embedding([img]).cpu().tolist()
-        res = client.search("images_collection", chart_emb, anns_field="chart_embedding")
+        image_emb = vectorizer.image_embedding([img]).cpu().tolist()
+        res = client.search("images_collection", image_emb, anns_field="image_embedding")
 
     return [r["id"] for r in res[0]], [r["distance"] for r in res[0]]
         
@@ -344,8 +344,8 @@ def main():
     # this allows the user to simply hit ENTER in the search field and have the correct thing happen
     if opt_image_input:
         opt_image_input = Image.open(opt_image_input.stream)
-        opt_rank = "chart"
-    elif opt_q and opt_rank != "chart":
+        opt_rank = "image"
+    elif opt_q and opt_rank != "image":
         opt_rank = "search"
 
     # try to parse opt_svm_c into something sensible (a float)
@@ -360,7 +360,7 @@ def main():
     except ValueError:
         page_number = 1
 
-    if opt_rank == "chart":
+    if opt_rank == "image":
         iids, scores = image_rank(opt_q, opt_image_input)
 
         # render all images to just the information we need for the UI

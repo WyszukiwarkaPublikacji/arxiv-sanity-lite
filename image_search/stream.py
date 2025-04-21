@@ -14,7 +14,7 @@ from image_search import get_paper_path
 
 
 CAPTION_REGEX = re.compile(
-    r"\b(fig(?:(?:ure)|.)?\s*\d*)\s*[:.,|]?\s*([\s\S]+)", re.IGNORECASE
+    r"\b(fig(?:(?:ure)|.)?\s*\S+)\s*[:.,|]?\s+(\S+[\s\S]+)", re.IGNORECASE
 )
 
 
@@ -41,9 +41,8 @@ def render_arxiv_id(arxiv_id, ensure_captions, dpi):
                     blocks.append([t, bbox])
                     continue
 
-                m = re.match(CAPTION_REGEX, t)
-                if m:
-                    blocks.append([m.group(2), bbox])
+                if re.match(CAPTION_REGEX, t):
+                    blocks.append([t, bbox])
             
             if blocks:
                 render = render_page(page, dpi=dpi)
@@ -70,13 +69,14 @@ class PageStream:
         self.max_workers = max_workers or os.cpu_count()
         self.dpi = dpi
         
-        self.batch_buffer = Queue()
+        self.batch_buffer = Queue(maxsize=8)
 
     def producer(self):
         futures = Queue()
 
         def submitter():
             nonlocal futures
+            count = 0
 
             with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
                 for arxiv_id in iter(self.queue.get, None):
@@ -95,6 +95,7 @@ class PageStream:
 
         batch = list()
         active_futures = set()
+        collected_ids = set()
 
         while True:
             while not futures.empty():
@@ -114,18 +115,20 @@ class PageStream:
 
             for f in as_completed(active_futures):
                 arxiv_id, pages_data = f.result()
+                collected_ids.add(arxiv_id)
 
                 for render, blocks in pages_data:
                     batch.append((arxiv_id, render, blocks))
                     
                     if len(batch) >= self.batch_size:
-                        self.batch_buffer.put(batch)
+                        self.batch_buffer.put((collected_ids, batch))
                         batch = list()
+                        collected_ids = set()
 
                 active_futures.remove(f)
 
         if batch:
-            self.batch_buffer.put(batch)
+            self.batch_buffer.put((collected_ids, batch))
             
         self.batch_buffer.put(None)
             
@@ -135,5 +138,7 @@ class PageStream:
         t = Thread(target=self.producer, daemon=True)
         t.start()
         
-        for batch in iter(self.batch_buffer.get, None):
-            yield batch
+        for collected_ids, batch in iter(self.batch_buffer.get, None):
+            yield collected_ids, batch
+            
+        t.join()
