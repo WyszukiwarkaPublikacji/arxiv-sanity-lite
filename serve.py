@@ -255,18 +255,16 @@ def chemical_formulas_rank(q: str = ""):
 def image_rank(q: str, img: Image.Image):
     client = get_embeddings()
     
-    if not img:
-        text_emb = vectorizer.text_embedding([q])
-    else:
-        text_emb, image_emb = vectorizer([img], [q])
-
-    if q and img:
-        res = hybrid_search(client, image_emb, text_emb)
-    elif img:
-        res = client.search("images_collection", image_emb, anns_field="image_embedding")
-    else:
+    if isinstance(img, np.ndarray) and q:
+        text_emb, chart_emb = vectorizer([img], [q])
+        res = hybrid_search(client, chart_emb, text_emb)
+    elif q:
+        text_emb = vectorizer.text_embedding([q]).cpu().tolist()
         res = client.search("images_collection", text_emb, anns_field="caption_embedding")
-        
+    else:
+        chart_emb = vectorizer.chart_embedding([img]).cpu().tolist()
+        res = client.search("images_collection", chart_emb, anns_field="chart_embedding")
+
     return [r["id"] for r in res[0]], [r["distance"] for r in res[0]]
         
 
@@ -306,8 +304,8 @@ def main():
     # this allows the user to simply hit ENTER in the search field and have the correct thing happen
     if opt_image_input:
         opt_image_input = Image.open(opt_image_input.stream)
-        opt_rank = "image"
-    elif opt_q and opt_rank != "image":
+        opt_rank = "chart"
+    elif opt_q and opt_rank != "chart":
         opt_rank = "search"
 
     # try to parse opt_svm_c into something sensible (a float)
@@ -322,7 +320,7 @@ def main():
     except ValueError:
         page_number = 1
 
-    if opt_rank == "image":
+    if opt_rank == "chart":
         iids, scores = image_rank(opt_q, opt_image_input)
 
         # render all images to just the information we need for the UI
