@@ -1,13 +1,22 @@
 {% extends "base.html" %}
 
 {% block variables %}
+
+{% if images is defined %}
+<script>
+var images = {{ images | tojson }};
+</script>
+{% else %}
 <script>
 var papers = {{ papers | tojson }};
 var tags = {{ tags | tojson }};
 var words = {{ words | tojson }};
 var words_desc = {{ words_desc | tojson }};
 var gvars = {{ gvars | tojson }};
+</script>
+{% endif %}
 
+<script>
 /*
 JS code here handles pagination. I really don't super love this approach,
 if anyone can think of a cleaner / shorter way please let me know.
@@ -31,8 +40,7 @@ var move_page = function(int_offset) {
 
         <!-- the choice box, allowing us to sort, rank, slice and dice papers -->
         <div id="cbox">
-            <form action="/" method="get">
-
+            <form action="/" method="post" enctype="multipart/form-data">
                 <!-- the search box, allowing us to search by keywords -->
                 <input name="q" type="text" id="qfield" value="{{ gvars.search_query }}">
 
@@ -45,6 +53,7 @@ var move_page = function(int_offset) {
                     <option value="time" {{ gvars.rank == 'time' and 'selected' }}>time</option>
                     <option value="random" {{ gvars.rank == 'random' and 'selected' }}>random</option>
                     <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>chemical formulas</option>
+                    <option value="chart" {{ gvars.rank == 'chart' and 'selected' }}>chart</option>
                 </select>
 
                 <!-- current tags, simply in a text field -->
@@ -72,6 +81,11 @@ var move_page = function(int_offset) {
                     <option value="yes" {{ gvars.skip_have == 'yes' and 'selected' }}>yes</option>
                     <option value="no" {{ gvars.skip_have == 'no' and 'selected' }}>no</option>
                 </select>
+                
+                <br>
+                <label for="image_input">Upload image: </label>
+                <input name="image_input" type="file" id="image_input" accept="image/*">
+                <br>
 
                 <input type="submit" value="Submit">
             </form>
@@ -113,6 +127,11 @@ var move_page = function(int_offset) {
 {% endblock %}
 
 {% block elements %}
-<script src="{{ url_for('static', filename='paper_list.js') }}" type="text/babel"></script>
+{% if images is defined %}
+    <script src="{{ url_for('static', filename='image_list.js') }}" type="text/babel"></script>
+{% else %}
+    <script src="{{ url_for('static', filename='paper_list.js') }}" type="text/babel"></script>
+{% endif %}
+
 <script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
 {% endblock %}

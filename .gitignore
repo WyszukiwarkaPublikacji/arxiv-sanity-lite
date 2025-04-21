@@ -8,3 +8,8 @@ secret_key.txt
 .venv
 venv
 .python-version
+.env
+.volumes
+volumes
+static/images
+tmp
