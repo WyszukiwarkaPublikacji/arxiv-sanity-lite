@@ -202,9 +202,9 @@ def setup_image_embeddings_collection(client: MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
     schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True)
     schema.add_field(
-        field_name="image_embedding",
+        field_name="chart_embedding",
         datatype=DataType.FLOAT_VECTOR,
-        dim=config.image_embedding_size,
+        dim=config.chart_embedding_size,
     )
     schema.add_field(
         field_name="caption_embedding",
@@ -215,15 +215,15 @@ def setup_image_embeddings_collection(client: MilvusClient):
     index_params = client.prepare_index_params()
 
     index_params.add_index(
-        field_name="image_embedding",
+        field_name="chart_embedding",
         index_type=config.images_index_type,
-        metric_type="IP",
+        metric_type=config.chart_metric_type,
     )
 
     index_params.add_index(
         field_name="caption_embedding",
         index_type=config.images_index_type,
-        metric_type="IP",
+        metric_type=config.caption_metric_type,
     )
 
     client.create_collection(

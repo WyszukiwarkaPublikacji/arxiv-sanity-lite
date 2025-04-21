@@ -16,8 +16,8 @@ import numpy as np
 import torch
 from sklearn import svm
 
-from image_search.embedding import FigureVectorizer, hybrid_search
-from extract_images import get_image_path
+from image_search import hybrid_search, get_image_path
+from image_search.embedding import FigureVectorizer
 
 vectorizer = FigureVectorizer("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -142,11 +142,11 @@ def render_iid(iid):
     path = get_image_path(d['base_id'], iid)
     url = path if os.path.isfile(path) else ''
 
-    aid = d["base_id"]
+    arxiv_id = d["base_id"]
     if d["version"] > 0:
-        aid += "v" + d["version"]
+        arxiv_id += "v" + d["version"]
 
-    return dict(weight=0.0, id=aid, path=url, caption=d["caption"])
+    return dict(weight=0.0, id=arxiv_id, path=url, caption=d["caption"])
 
 
 def random_rank():
@@ -254,7 +254,11 @@ def chemical_formulas_rank(q: str = ""):
 
 def image_rank(q: str, img: Image.Image):
     client = get_embeddings()
-    text_emb, image_emb = vectorizer([q], [img] if img else None)
+    
+    if not img:
+        text_emb = vectorizer.text_embedding([q])
+    else:
+        text_emb, image_emb = vectorizer([img], [q])
 
     if q and img:
         res = hybrid_search(client, image_emb, text_emb)
