@@ -1,8 +1,10 @@
 aiohttp==3.11.12
+click==8.1.8
 feedparser==6.0.11
 PyMuPDF==1.25.5
 Flask==3.1.0
 numpy==2.1.1
+# numpy==2.2.3 
 Pillow==11.2.1
 pymilvus==2.5.4
 Requests==2.32.3
@@ -15,3 +17,11 @@ torch==2.5.1
 tqdm==4.67.1
 transformers==4.49.0
 ultralytics==8.3.90
+itsdangerous==2.2.0
+Jinja2==3.1.5
+joblib==1.4.2
+MarkupSafe==3.0.2
+Scipy==1.15.2 
+Sgmllib3k==1.0.0
+threadpoolctl==3.5.0
+Werkzeug==3.1.3
