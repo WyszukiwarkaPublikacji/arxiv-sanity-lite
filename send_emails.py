@@ -12,9 +12,6 @@ Sender Email:
 set from_email in send_email to your own sender email configured in sendgrid
 """
 
-
-
-
 import json
 import os
 from datetime import datetime
