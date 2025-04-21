@@ -30,6 +30,25 @@ sudo ./eztoolbox.sh run compute_chemical  #
 sudo ./eztoolbox.sh down
 ```
 
+## Running (locally, without Docker)
+```sh
+# Install dependencies
+pip install -r requirements.txt
+
+# Install Astral (for uv command)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Download snapshot
+KAGGLE_USERNAME=<username> KAGGLE_KEY=<key> ./download.sh <arxiv|chemrxiv>
+
+# set path to Milvus database
+export MILVUS_PATH="data/embeddings.db"
+
+# generate database from snapshot
+python generate_db_from_snapshot.py --<arxiv|chemrxiv>
+```
+
+
 ## Running (old)
 for chemrxiv we use snapshots from the [chemrxiv-dashboard](https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io) project, and run the respective script.
 ```bash
