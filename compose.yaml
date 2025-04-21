@@ -29,7 +29,7 @@ services:
       KAGGLE_KEY: "changeme"
     volumes:
       - "./data/db:/data"
-      - "./data/models_cache:/root/.data/DECIMER-V2"
+      - "./data/decimer_cache:/root/.data/DECIMER-V2"
       - "./data/huggingface_cache:/root/.cache/huggingface"
       - "./data/downloads:/downloads"
     depends_on:
