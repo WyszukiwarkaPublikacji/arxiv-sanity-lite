@@ -7,7 +7,6 @@ var tags = {{ tags | tojson }};
 var words = {{ words | tojson }};
 var words_desc = {{ words_desc | tojson }};
 var gvars = {{ gvars | tojson }};
-
 /*
 JS code here handles pagination. I really don't super love this approach,
 if anyone can think of a cleaner / shorter way please let me know.
@@ -21,98 +20,76 @@ var move_page = function(int_offset) {
 {% endblock %}
 
 {% block content %}
-
-{% if not user %}
-<div id="log-fun-warn">(hi! just btw you have to be logged in to be able to add/delete/curate tags for papers and get recommendations)</div>
-{% endif %}
-
-<div id="controls">
-    <div>
-
-        <!-- the choice box, allowing us to sort, rank, slice and dice papers -->
-        <div id="cbox">
-            <form action="/" method="get">
-
-                <!-- the search box, allowing us to search by keywords -->
-                <input name="q" type="text" id="qfield" value="{{ gvars.search_query }}">
-
-                <!-- rank type: one of tags, pid, time, or random -->
-                <label for="rank_type">Rank by:</label>
+<div id="main-header">
+    <h1><span class="title-first">Research Papers</span><br><span class="title-second">Search Engine</span></h1>
+    <form action="/" method="post" class="search-form" enctype="multipart/form-data">
+        <center>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" placeholder="Find keyword, author, SMILES or title..." id="search-bar" value="{{ gvars.search_query }}">
+                <button type="submit" id="search-btn">Search</button>
                 <select name="rank" id="rank_select">
-                    <option value="search" {{ gvars.rank == 'search' and 'selected' }}>search</option>
-                    <option value="tags" {{ gvars.rank == 'tags' and 'selected' }}>tags</option>
+                    <option value="search" {{ gvars.rank == 'search' and 'selected' }}>keyword</option>
+                    <option value="tags" {{ gvars.rank == 'tags' and 'selected' }}>tag</option>
                     <option value="pid" {{ gvars.rank == 'pid' and 'selected' }}>pid</option>
-                    <option value="time" {{ gvars.rank == 'time' and 'selected' }}>time</option>
+                    <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>SMILES</option>
+                    <option value="image" {{ gvars.rank == 'image' and 'selected' }}>image</option>
                     <option value="random" {{ gvars.rank == 'random' and 'selected' }}>random</option>
-                    <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>chemical formulas</option>
                 </select>
+            </div>
+            <div id="cbox_fast">
+                Shortcuts:
+                <a href="/?rank=tags&tags=all&time_filter=7&skip_have=yes">recommend over last week</a>
+                <a href="/?rank=tags&tags=all&time_filter=3&skip_have=yes">recommend over last 3 days</a>
+                <a href="/?rank=time">recent</a>
+                <a href="/?rank=random&time_filter=7">random last week</a>
+            </div>
+            <br />
+            <div class="search-container" id="image_search_window" style="display: none;">
+                <p>
+                    <b>Image search:</b>
+                    &emsp;<input name="image_input" type="file" id="image_input" accept="image/*">
+                </p>
+            </div>
+            <script>
+                var rankSelect = document.getElementById('rank_select');
+                rankSelect.onchange = (event) => {
+                    if(rankSelect.value == "image")
+                    {
+                        document.getElementById('image_search_window').style.display = 'block';
+                    } else {
+                        document.getElementById('image_search_window').style.display = 'none';
+                    }
+                }
+            </script>
+        </center>
+    </form>
+</div>
 
-                <!-- current tags, simply in a text field -->
-                <label for="tags">tags: </label>
-                <input name="tags" type="text" id="tags_field" value="{{ gvars.tags }}">
-
-                <!-- current pid, simply in a text field -->
-                <label for="pid">pid: </label>
-                <input name="pid" type="text" id="pid_field" value="{{ gvars.pid }}">
-
-                <!-- current time_filter, in a text field -->
-                <label for="time_filter">time_filter (days): </label>
-                <input name="time_filter" type="text" id="time_filter_field" value="{{ gvars.time_filter }}">
-
-                <!-- current svm_c, in a text field -->
-                <label for="svm_c">svm_c: </label>
-                <input name="svm_c" type="text" id="svm_c_field" value="{{ gvars.svm_c }}">
-
-                <label for="smiles_input">chemical SMILES: </label>
-                <input name="smiles_input" type="text" id="smiles_input" value="{{ gvars.smiles_input }}">
-
-                <!-- current skip_have: one of yes or no -->
-                <label for="skip_have">skip_have: </label>
-                <select name="skip_have" id="skip_have_select">
-                    <option value="yes" {{ gvars.skip_have == 'yes' and 'selected' }}>yes</option>
-                    <option value="no" {{ gvars.skip_have == 'no' and 'selected' }}>no</option>
-                </select>
-
-                <input type="submit" value="Submit">
-            </form>
-        </div>
-        <!-- some hand-coded common choices for faster and more convenient operation -->
-        <div id="cbox_fast">
-            Shortcuts:
-            <a href="/?rank=tags&tags=all&time_filter=7&skip_have=yes">recommend over last week</a>
-            <a href="/?rank=tags&tags=all&time_filter=3&skip_have=yes">recommend over last 3 days</a>
-            <a href="/?rank=time">recent</a>
-            <a href="/?rank=random&time_filter=7">random last week</a>
-        </div>
+<div id="recommended-section">
+    {% if papers|length > 0 %}
+    <h2>Recommended papers</h2>
+    {% else %}
+    <h2>No results for your query</h2>
+    {% endif %}
+    <div id="cards">
+        {% for paper in papers[:8] %}
+        <a href="/inspect?pid={{ paper.id }}" class="card">
+            <h3>{{ paper.title }}</h3>
+            <p class="author">{{ paper.authors }}</p>
+            <div class="tags">
+                {% for tag in paper.tags.split(', ') %}
+                <span class="tag">{{ tag }}</span>
+                {% endfor %}
+                {% for utag in paper.utags %}
+                <span class="tag">{{ utag }}</span>
+                {% endfor %}
+            </div>
+            <p class="date">📅 {{ paper.time }}</p>
+        </a>
+        {% endfor %}
     </div>
-    <div>
-
-    </div>
+    <br />
+    <br />
 </div>
-
-{% if user and tags %}
-<div id="tagwrap">
-</div>
-{% endif %}
-
-{% if user and words %}
-<div id="wordwrap" style="display:none;">
-</div>
-{% endif %}
-
-<!-- main content showing all the papers as a list -->
-<div id="wrap">
-</div>
-
-<!-- links to previous and next pages -->
-<div id="pagination">
-    <span id="link-prev-page" onclick='move_page(-1);'>prev</span>
-    <span>current page: {{ gvars.page_number }} </span>
-    <span id="link-next-page" onclick='move_page(1);'>next</span>
-</div>
-{% endblock %}
-
-{% block elements %}
-<script src="{{ url_for('static', filename='paper_list.js') }}" type="text/babel"></script>
-<script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
 {% endblock %}

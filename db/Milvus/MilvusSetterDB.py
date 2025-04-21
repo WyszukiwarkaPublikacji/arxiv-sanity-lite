@@ -20,8 +20,7 @@ class MilvusSetterDB:
             MilvusInstance.connect_to_instance()
 
             if utility.has_collection(MilvusSetterDB.COLLECTION_NAME):
-                print(f"Collection '{MilvusSetterDB.COLLECTION_NAME}' already exists.")
-                return True
+                utility.drop_collection(MilvusSetterDB.COLLECTION_NAME)
 
             schema = CollectionSchema(fields, description="Similar Publications meta", auto_id=False)
             collection = Collection(name=MilvusSetterDB.COLLECTION_NAME, schema=schema)
@@ -53,8 +52,7 @@ class MilvusSetterDB:
             MilvusInstance.connect_to_instance()
             
             if utility.has_collection(MilvusSetterDB.COLLECTION_NAME2):
-                print(f"Collection '{MilvusSetterDB.COLLECTION_NAME2}' already exists.")
-                return True
+                utility.drop_collection(MilvusSetterDB.COLLECTION_NAME2)
 
             schema = CollectionSchema(fields, description="Similar Publications papers", auto_id=False)
             collection = Collection(name=MilvusSetterDB.COLLECTION_NAME2, schema=schema)

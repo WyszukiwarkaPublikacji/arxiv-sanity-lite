@@ -1,7 +1,10 @@
-import sys
-import os
-import sqlalchemy as db_alchemy
-from sqlalchemy import Table, Column, Integer, BigInteger, String, Text, Boolean, DateTime, LargeBinary, ForeignKey, MetaData, func
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import (
+    Column, Integer, BigInteger, String, Text, Boolean,
+    DateTime, LargeBinary, ForeignKey, func, Integer
+)
+import os, sys
+# reuse the existing metadata and engine
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -12,130 +15,146 @@ from SQLLiteAlchemyInstance import SQLAlchemyInstance
 
 metadata = SQLAlchemyInstance().get_sqllite_metadata()
 engine = SQLAlchemyInstance().get_engine()
+# Declarative base bound to the existing metadata
+Base = declarative_base(metadata=metadata)
 
-Users = Table('users', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('first_name', String(30), nullable=False, unique=True),
-    Column('last_name', String(30), nullable=False, unique=True),
-    Column('login', String(30), nullable=False, unique=True),
-    Column('email', String(120), nullable=False, unique=True),
-    Column('password', String(255), nullable=False),
-    Column('date_birth', DateTime, nullable=False),
-    Column('created_at', DateTime, server_default=func.now()),
-    Column('updated_at', DateTime, server_default=func.now(), onupdate=func.now()),
-    Column('deleted_at', DateTime, nullable=True)
-)
+class Users(Base):
+    __tablename__ = 'users'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False, unique=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-UserSearches = Table('user_searches', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
-    Column('text_searched', String(120), nullable=False),
-    Column('created_at', DateTime, server_default=func.now())
-)
+class UserSearches(Base):
+    __tablename__ = 'user_searches'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
+    text_searched = Column(String(120), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
 
-SavedFolders = Table('saved_folders', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('name', String(30), nullable=False),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False)
-)
+class SavedFolders(Base):
+    __tablename__ = 'saved_folders'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), nullable=False)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
 
-Publications = Table('publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('arxiv_id', String(10), nullable=False),
-    Column('title', Text, nullable=False),
-    Column('language_id', BigInteger, ForeignKey('languages.id'), nullable=False),
-    Column('abstract', Text, nullable=False),
-    Column('origin_url', Text, nullable=False),
-    Column('origin_url_html', Text),
-    Column('created_at', DateTime, server_default=func.now()),
-    Column('updated_at', DateTime, server_default=func.now(), onupdate=func.now())
-)
+class Publications(Base):
+    __tablename__ = 'publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    arxiv_id = Column(String(10), nullable=False)
+    title = Column(Text, nullable=False)
+    language_id = Column(BigInteger, ForeignKey('languages.id'), nullable=False)
+    abstract = Column(Text, nullable=False)
+    origin_url = Column(Text, nullable=False)
+    origin_url_html = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class PublicationAuthors(Base):
+    __tablename__ = 'publication_authors'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String(30), nullable=False)
+    last_name = Column(String(30), nullable=False)
+    country_id = Column(BigInteger, ForeignKey('countries.id'), nullable=False)
+
+class Categories(Base):
+    __tablename__ = 'categories'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    name = Column(String(30), unique=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+class SeenPublications(Base):
+    __tablename__ = 'seen_publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    origin_publication_id = Column(String(30), ForeignKey('papers.key'), nullable=False)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
+
+class CategoryPublications(Base):
+    __tablename__ = 'categories_publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    category_id = Column(BigInteger, ForeignKey('categories.id'), nullable=False)
+    publication_id = Column(BigInteger, ForeignKey('publications.id'), nullable=False)
+
+class SavedPublications(Base):
+    __tablename__ = 'saved_publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    folder_id = Column(BigInteger, ForeignKey('saved_folders.id'), nullable=False)
+    publication_id = Column(BigInteger, ForeignKey('publications.id'), nullable=False)
+
+class LikedPublications(Base):
+    __tablename__ = 'liked_publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
+    publication_id = Column(BigInteger, ForeignKey('publications.id'), nullable=False)
+
+class HelpfulPublications(Base):
+    __tablename__ = 'helpful_publications'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    user_id = Column(BigInteger, ForeignKey('users.id'), nullable=False)
+    publication_id = Column(BigInteger, ForeignKey('publications.id'), nullable=False)
+    status = Column(Boolean, nullable=False)
+
+class Countries(Base):
+    __tablename__ = 'countries'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), nullable=False)
+    iso_name = Column(String(3), nullable=False)
+
+class Languagies(Base):
+    __tablename__ = 'languages'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    language_name = Column(String(60), unique=True, nullable=False)
+    iso_name = Column(String(3), nullable=False)
+
+class CountryLanguagies(Base):
+    __tablename__ = 'countries_languages'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True)
+    country_id = Column(BigInteger, ForeignKey('countries.id'), nullable=False)
+    language_id = Column(BigInteger, ForeignKey('languages.id'), nullable=False)
+
+class MetaDataDB(Base):
+    __tablename__ = 'metas'
+    __table_args__ = {'sqlite_autoincrement': True}
+    key = Column(String(30), primary_key=True)
+    value = Column(LargeBinary, nullable=True)
+
+class Papers(Base):
+    __tablename__ = 'papers'
+    __table_args__ = {'sqlite_autoincrement': True}
+    key = Column(String(30), primary_key=True)
+    value = Column(LargeBinary, nullable=True)
+
+class Citation(Base):
+    __tablename__ = 'citations'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    origin_publication_id = Column(String(30), ForeignKey('papers.key'), nullable=False)
+    citation_publication_id = Column(String(30), ForeignKey('papers.key'), nullable=False)
+
+# To create all tables:
+
+def  creation():
+    Base.metadata.create_all(engine)
+    print("All tables created")
+
+def  creation_with_drop():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(engine)
+    print("All tables created")
 
 
-
-PublicationAuthors = Table('publication_authors', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('first_name', String(30), nullable=False),
-    Column('last_name', String(30), nullable=False),
-    Column('country_id', BigInteger, ForeignKey('countries.id'), nullable=False)
-)
-
-Categories = Table('categories', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('name', String(30), unique=True, nullable=False),
-    Column('created_at', DateTime, server_default=func.now())
-)
-
-SeenPublications = Table('seen_publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
-    Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False),
-    Column('category_id', BigInteger, ForeignKey('categories.id'), nullable=False)
-)
-
-CategoryPublications = Table('categories_publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('category_id', BigInteger, ForeignKey('categories.id'), nullable=False),
-    Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False)
-)
-
-SavedPublications = Table('saved_publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('folder_id', BigInteger, ForeignKey('saved_folders.id'), nullable=False),
-    Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False)
-)
-
-LikedPublications = Table('liked_publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
-    Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False)
-)
-
-HelpfulPublications = Table('helpful_publications', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('user_id', BigInteger, ForeignKey('users.id'), nullable=False),
-    Column('publication_id', BigInteger, ForeignKey('publications.id'), nullable=False),
-    Column('status', Boolean, nullable=False)
-)
-
-Countries = Table('countries', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('name', String(80), nullable=False),
-    Column('iso_name', String(3), nullable=False)
-)
-
-Languages = Table('languages', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('language_name', String(60), unique=True, nullable=False),
-    Column('iso_name', String(3), nullable=False)
-)
-
-CountryLanguages = Table('countries_languages', metadata,
-    Column('id', BigInteger, primary_key=True),
-    Column('country_id', BigInteger, ForeignKey('countries.id'), nullable=False),
-    Column('language_id', BigInteger, ForeignKey('languages.id'), nullable=False)
-)
-
-MetaDataDB = Table('metas', metadata,
-    Column('key', String(30), primary_key=True),
-    Column('value', LargeBinary, nullable=True)
-)
-
-Papers = Table('papers', metadata,
-    Column('key', String(30), primary_key=True),
-    Column('value', LargeBinary, nullable=True)
-)
-
-Citations = Table('citations', metadata, 
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('origin_publication_id', String(30), ForeignKey('papers.key'), nullable=False),
-    Column('citation_publication_id', String(30), ForeignKey('papers.key'), nullable=False)
-)
-
-def main():
-  metadata.drop_all(engine)
-  metadata.create_all(engine)
-
-if __name__ == '__main__':
-  main()
-
+# creation_with_drop()

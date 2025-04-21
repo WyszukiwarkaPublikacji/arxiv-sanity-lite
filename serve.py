@@ -20,8 +20,15 @@ from flask import render_template
 from flask import g # global session-level object
 from flask import session
 
+from db.SQLLiteAlchemyInstance import SQLAlchemyInstance
+from db.SQLLite.OrmDB import Users, SeenPublications, Publications
+from papers.paper import Paper
+from sqlalchemy import insert, select, func
+
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
+from algorithms.rl_algorithm.rl_algorithm import RLAlgorithm
+from papers.paper import Paper
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -206,6 +213,94 @@ def default_context():
     context['user'] = g.user if g.user is not None else ''
     return context
 
+def get_seen_pids_for_user():
+    print('get_seen_pids_for_user', g.user)
+    if g.user is None:
+        return []
+
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+
+    with engine.connect() as conn:
+
+        user_id = get_user()
+        print(user_id)
+        # SELECT arxiv_id from publications where there's a seen_publications record
+        seen_stmt = (
+            select(SeenPublications.origin_publication_id)
+            .select_from(SeenPublications)
+            .where(SeenPublications.user_id == user_id)
+            .limit(50)
+        )
+
+        result = conn.execute(seen_stmt).fetchall()
+        return result
+
+def get_user():
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+    if g.user is None:
+        return []
+
+    with engine.connect() as conn:
+        if check_user_exists(g.user):
+            user_stmt = select(Users.id).where(Users.name == g.user)
+            user_row = conn.execute(user_stmt).fetchone()
+            return user_row[0]
+
+
+def add_user(name):
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+
+    with engine.connect() as conn:
+        if not check_user_exists(name):
+            print('add_user', name)
+            user_stmt = insert(Users).values(name=name)
+            conn.execute(user_stmt)
+            conn.commit()
+
+def check_user_exists(name):
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+    with engine.connect() as conn:
+        user_stmt = select(Users.id).where(Users.name == name)
+        user_row = conn.execute(user_stmt).fetchone()
+        if not user_row:
+            return False
+        return True
+
+
+def add_seen_publication(pid):
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+    if g.user is None:
+        return []
+    with engine.connect() as conn:
+        user_id = get_user()
+
+        # Check if exists
+        check_stmt = (
+            select(SeenPublications)
+            .where(
+                SeenPublications.user_id == user_id,
+                SeenPublications.origin_publication_id == pid
+            )
+        )
+        if conn.execute(check_stmt).first():
+            print("Already exists, skipping.")
+            return
+        print("bu bu")
+        # Insert manually
+        insert_stmt = insert(SeenPublications).values(
+            user_id=user_id,
+            origin_publication_id=pid
+        )
+        conn.execute(insert_stmt)
+        conn.commit()
+        print("Added new seen publication.")
+
+
 @app.route('/', methods=['GET'])
 def main():
 
@@ -238,21 +333,39 @@ def main():
         C = 0.01 # sensible default, i think
 
     # rank papers: by tags, by time, by random
-    words = [] # only populated in the case of svm rank
-    if opt_rank == 'search':
-        pids, scores = search_rank(q=opt_q)
-    elif opt_rank == 'tags':
-        pids, scores, words = svm_rank(tags=opt_tags, C=C)
-    elif opt_rank == 'pid':
-        pids, scores, words = svm_rank(pid=opt_pid, C=C)
-    elif opt_rank == 'time':
-        pids, scores = time_rank()
-    elif opt_rank == 'random':
-        pids, scores = random_rank()
-    elif opt_rank == 'chemical_formulas':
-        pids, scores = chemical_formulas_rank(opt_smiles_input)
+
+
+    pdb = get_papers()
+
+    pids = []
+    words = []
+    if g.user is not None and g.user != '':
+        user_history = get_seen_pids_for_user()
+        papers_history = []
+        for i in range(0, len(user_history)):
+            papers_history.append(Paper.from_id(user_history[i][0], pdb))
+
+        recommend_instance = RLAlgorithm(get_papers_db())
+        result_recommendations = recommend_instance.recommend(papers_history, 20)
+        for i in range(0, len(result_recommendations)):
+            pids.append(result_recommendations[i].arxiv_id)
+
     else:
-        raise ValueError("opt_rank %s is not a thing" % (opt_rank, ))
+        words = []  # only populated in the case of svm rank
+        if opt_rank == 'search':
+            pids, scores = search_rank(q=opt_q)
+        elif opt_rank == 'tags':
+            pids, scores, words = svm_rank(tags=opt_tags, C=C)
+        elif opt_rank == 'pid':
+            pids, scores, words = svm_rank(pid=opt_pid, C=C)
+        elif opt_rank == 'time':
+            pids, scores = time_rank()
+        elif opt_rank == 'random':
+            pids, scores = random_rank()
+        elif opt_rank == 'chemical_formulas':
+            pids, scores = chemical_formulas_rank(opt_smiles_input)
+        else:
+            raise ValueError("opt_rank %s is not a thing" % (opt_rank,))
 
     # filter by time
     if opt_time_filter:
@@ -261,29 +374,33 @@ def main():
         tnow = time.time()
         deltat = int(opt_time_filter)*60*60*24 # allowed time delta in seconds
         keep = [i for i,pid in enumerate(pids) if (tnow - kv[pid]['_time']) < deltat]
-        pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
+        pids = [pids[i] for i in keep]
 
     # optionally hide papers we already have
     if opt_skip_have == 'yes':
         tags = get_tags()
         have = set().union(*tags.values())
         keep = [i for i,pid in enumerate(pids) if pid not in have]
-        pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
+        pids = [pids[i] for i in keep]
+
 
     # crop the number of results to RET_NUM, and paginate
     try:
         page_number = max(1, int(opt_page_number))
     except ValueError:
         page_number = 1
+
+
     start_index = (page_number - 1) * RET_NUM # desired starting index
     end_index = min(start_index + RET_NUM, len(pids)) # desired ending index
+
     pids = pids[start_index:end_index]
-    scores = scores[start_index:end_index]
+    # scores = scores[start_index:end_index]
 
     # render all papers to just the information we need for the UI
     papers = [render_pid(pid) for pid in pids]
-    for i, p in enumerate(papers):
-        p['weight'] = float(scores[i])
+    # for i, p in enumerate(papers):
+    #     p['weight'] = float(scores[i])
 
     # build the current tags for the user, and append the special 'all' tag
     tags = get_tags()
@@ -314,6 +431,7 @@ def inspect():
     # fetch the paper of interest based on the pid
     pid = request.args.get('pid', '')
     pdb = get_papers()
+    recommend_instance = RLAlgorithm(get_papers_db())
     if pid not in pdb:
         return "error, malformed pid" # todo: better error handling
 
@@ -335,19 +453,50 @@ def inspect():
 
     # package everything up and render
     paper = render_pid(pid)
+    add_seen_publication(pid)
+
+    paper_instance = Paper.from_id(pid, pdb)
+    result_recommendations = recommend_instance.recommend([paper_instance], 5)
+    similar_papers = [render_pid(p.arxiv_id) for p in result_recommendations if p.arxiv_id != pid]
+
+    # print(result_recommendations)
     context = default_context()
     context['paper'] = paper
     context['words'] = words
     context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector. This is the actual summary that feeds into the SVM to power recommendations, so hopefully it is good and representative!"
+    context['similar_papers'] = similar_papers
     return render_template('inspect.html', **context)
 
-@app.route('/profile')
-def profile():
-    context = default_context()
-    with get_email_db() as edb:
-        email = edb.get(g.user, '')
-        context['email'] = email
-    return render_template('profile.html', **context)
+@app.route('/add_to_folder/<folder>/<pid>')
+def add_to_folder(folder, pid):
+    if g.user is None:
+        return "error, not logged in", 401
+
+    with get_tags_db(flag='c') as tags_db:
+        if g.user not in tags_db:
+            tags_db[g.user] = {}
+
+        user_tags = tags_db[g.user]
+        user_tags.setdefault(folder, set()).add(pid)
+        tags_db[g.user] = user_tags
+
+    return redirect(url_for('profile'))
+
+
+@app.route('/remove_from_folder/<folder>/<pid>')
+def remove_from_folder(folder, pid):
+    if g.user is None:
+        return "error, not logged in", 401
+
+    with get_tags_db(flag='c') as tags_db:
+        user_tags = tags_db.get(g.user, {})
+        if folder in user_tags and pid in user_tags[folder]:
+            user_tags[folder].remove(pid)
+            if not user_tags[folder]:
+                del user_tags[folder]
+            tags_db[g.user] = user_tags
+
+    return redirect(url_for('profile'))
 
 @app.route('/stats')
 def stats():
@@ -376,6 +525,52 @@ def stats():
 def about():
     context = default_context()
     return render_template('about.html', **context)
+
+
+
+
+@app.route('/settings')
+def settings():
+    context = default_context()
+    from flask import request
+    with get_email_db() as edb:
+        email = edb.get(g.user, '')
+    context['email'] = email
+    context['notif_enabled'] = bool(email)
+
+    context['frequency'] = request.args.get('frequency', 'daily')
+
+    context['gvars'] = {
+        'skip_have': request.args.get('skip_have', 'no'),
+        'rank':      request.args.get('rank', 'time'),
+    }
+
+    return render_template('settings.html', **context)
+
+@app.route('/profile/bookmarks/<folder>')
+def view_folder(folder):
+    context = default_context()
+    tags = get_tags()
+    print(tags)
+    if folder not in tags:
+        return "folder not found", 404
+
+    pids = list(tags[folder])
+    papers = [ render_pid(pid) for pid in pids ]
+    context.update({
+        'current_folder': folder,
+        'papers': papers
+    })
+    return render_template('folder.html', **context)
+
+@app.route('/profile')
+def profile():
+    context = default_context()
+    with get_email_db() as edb:
+        email = edb.get(g.user, '')
+        context['email'] = email
+    return render_template('profile.html', **context)
+
 
 # -----------------------------------------------------------------------------
 # tag related endpoints: add, delete tags for any paper
@@ -471,11 +666,11 @@ def delete_tag(tag=None):
 
 @app.route('/login', methods=['POST'])
 def login():
-
     # the user is logged out but wants to log in, ok
     if g.user is None and request.form['username']:
         username = request.form['username']
         if len(username) > 0: # one more paranoid check
+            add_user(username)
             session['user'] = username
 
     return redirect(url_for('profile'))
