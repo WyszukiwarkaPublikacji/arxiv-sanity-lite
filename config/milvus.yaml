@@ -1,0 +1,13 @@
+storage:
+  chunkManager:
+    type: remote
+    remote:
+      endpoint: minio:9000
+      bucketName: a-bucket
+      accessKeyID: minioadmin
+      accessKeySecret: minioadmin
+      maxConnections: 200
+      uploadTimeout: 12000
+      retry:
+        maxAttempts: 5
+        backoff: 5s

@@ -10,6 +10,10 @@ from sqlitedict import SqliteDict
 from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
+import pickle
+
+
+
 
 # -----------------------------------------------------------------------------
 # global configuration

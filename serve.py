@@ -6,7 +6,7 @@ ideas:
 - unify all different pages into single search filter sort interface
 - special single-image search just for paper similarity
 """
-
+import json
 import os
 import re
 import time
@@ -17,11 +17,16 @@ from sklearn import svm
 
 from flask import Flask, request, redirect, url_for
 from flask import render_template
-from flask import g # global session-level object
+from flask import g
 from flask import session
-
+from db.SQLLite.OrmDB import User, SeenPublication, Publication
+from papers.paper import Paper
+from sqlalchemy import insert, select, func
+from algorithms.paper_local_sampling import PaperLocalSampling
+import redis
 from aslite.db import get_papers_db, get_metas_db, get_tags_db, get_last_active_db, get_email_db
 from aslite.db import load_features
+from db.SQLLiteAlchemyInstance import SQLAlchemyInstance
 
 # -----------------------------------------------------------------------------
 # inits and globals
@@ -111,7 +116,9 @@ def random_rank():
 
 def time_rank():
     mdb = get_metas()
+
     ms = sorted(mdb.items(), key=lambda kv: kv[1]['_time'], reverse=True)
+    # print(ms)
     tnow = time.time()
     pids = [k for k, v in ms]
     scores = [(tnow - v['_time'])/60/60/24 for k, v in ms] # time delta in days
@@ -206,6 +213,39 @@ def default_context():
     context['user'] = g.user if g.user is not None else ''
     return context
 
+
+
+
+
+def get_seen_pids_for_user():
+    if g.user is None:
+        return []
+    instance = SQLAlchemyInstance()
+    engine = instance.get_engine()
+
+    with engine.connect() as conn:
+        user_stmt = select(User.id).where(User.name == g.user)
+        user_row = conn.execute(user_stmt).fetchone()
+        if not user_row:
+            return []
+
+        user_id = user_row[0]
+
+        seen_stmt = (
+            select(Publication.arxiv_id)
+            .select_from(SeenPublication)
+            .join(Publication, SeenPublication.origin_publication_id == Publication.id)
+            .where(SeenPublication.user_id == user_id)
+        )
+        # row = conn.execute(stmt)
+        conn.commit()
+        return [row[0] for row in conn.execute(seen_stmt)]
+
+
+
+
+
+
 @app.route('/', methods=['POST', 'GET'])
 def main():
 
@@ -268,6 +308,7 @@ def main():
     if opt_time_filter:
         mdb = get_metas()
         kv = {k:v for k,v in mdb.items()} # read all of metas to memory at once, for efficiency
+
         tnow = time.time()
         deltat = int(opt_time_filter)*60*60*24 # allowed time delta in seconds
         keep = [i for i,pid in enumerate(pids) if (tnow - kv[pid]['_time']) < deltat]
@@ -285,6 +326,7 @@ def main():
         page_number = max(1, int(opt_page_number))
     except ValueError:
         page_number = 1
+
     start_index = (page_number - 1) * RET_NUM # desired starting index
     end_index = min(start_index + RET_NUM, len(pids)) # desired ending index
     pids = pids[start_index:end_index]
@@ -316,49 +358,125 @@ def main():
     context['gvars']['search_query'] = opt_q
     context['gvars']['svm_c'] = str(C)
     context['gvars']['page_number'] = str(page_number)
+
+
+    recommended = []
+    if g.user:
+        seen_pids = get_seen_pids_for_user()
+        if hasattr(g, '_pdb'):
+            g._pdb.close()
+            del g._pdb
+
+        pdb = get_papers()
+
+        # znajdź wpisy, gdzie _idv (czyli pełne arxiv_id z wersją) pasuje do odwiedzonych
+        matching_pids = [pid for pid, meta in pdb.items() if meta.get('_idv', '').split('v')[0] in seen_pids]
+        seen_papers = [Paper.from_id(pid, db=pdb) for pid in matching_pids]
+
+
+        print(f"[DEBUG] seen_papers = {[p.arxiv_id for p in seen_papers]}")
+        print(f"[DEBUG] recommended raw = {[p.arxiv_id if p else None for p in recommended]}")
+
+        if seen_papers:
+            sampler = PaperLocalSampling(papers_db=pdb)
+            try:
+                recommended = sampler.recommend(seen_papers, recommend_count=8)
+                recommended = [render_pid(p.arxiv_id) for p in recommended if p and p.arxiv_id and p.arxiv_id not in seen_pids]
+                print(f"[DEBUG] recommended raw = {[p.arxiv_id if p else None for p in recommended]}")
+
+            except Exception as e:
+                print("Recommendation error:", e)
+    context['recommended_papers'] = recommended
+
     return render_template('index.html', **context)
 
 @app.route('/inspect', methods=['GET'])
 def inspect():
-
     # fetch the paper of interest based on the pid
+
     pid = request.args.get('pid', '')
+
     pdb = get_papers()
+
     if pid not in pdb:
         return "error, malformed pid" # todo: better error handling
 
-    # load the tfidf vectors, the vocab, and the idf table
+    full_paper_data = pdb[pid]
+    paper = render_pid(pid)
+    features = load_features()
+    pix = features['pids'].index(pid)
+    paper_obj = Paper.from_id(pid, db=pdb, vector = pix)
+
+    if g.user is not None:
+        import redis, json
+        redis_cli = redis.Redis(host='localhost', port=6379, db=0)
+        result = []
+        if redis_cli.get(g.user):
+            result = json.loads(redis_cli.get(g.user))
+            if pid not in result:
+                result.append(pid)
+        else:
+            result.append(pid)
+        redis_cli.set(g.user, json.dumps(result))
+
+
+        from aslite.arxiv import parse_arxiv_url
+        arxiv_idv, raw_id, version = parse_arxiv_url(full_paper_data['id'])
+        arxiv_id = raw_id
+        instance = SQLAlchemyInstance()
+        engine = instance.get_engine()
+        with engine.connect() as conn:
+            user_stmt = select(User.id).where(User.name == g.user)
+            user_row = conn.execute(user_stmt).fetchone()
+
+            pub_stmt = select(Publication.id).where(Publication.arxiv_id == arxiv_id)
+            pub_row = conn.execute(pub_stmt).fetchone()
+
+            if user_row and pub_row:
+                print(user_id)
+                user_id = user_row[0]
+                publication_id = pub_row[0]
+
+                check_stmt = select(SeenPublication).where(
+                    (SeenPublication.user_id == user_id) &
+                    (SeenPublication.publication_id == publication_id)
+                )
+                already_seen = conn.execute(check_stmt).fetchone()
+
+                if not already_seen:
+                    conn.execute(insert(SeenPublication).values(
+                        origin_publication_id=arxiv_id,
+                        user_id=user_id
+                    ))
+
+    # generate recommendations
+    sampler = PaperLocalSampling(papers_db=pdb)
+    recommended_papers = sampler.recommend([paper_obj], recommend_count=4)
+    similar_papers = [render_pid(p.arxiv_id) for p in recommended_papers if p.arxiv_id != pid]
+
+    # extract keywords using TF-IDF
     features = load_features()
     x = features['x']
     idf = features['idf']
-    ivocab = {v:k for k,v in features['vocab'].items()}
+    ivocab = {v: k for k, v in features['vocab'].items()}
     pix = features['pids'].index(pid)
     wixs = np.flatnonzero(np.asarray(x[pix].todense()))
-    words = []
-    for ix in wixs:
-        words.append({
-            'word': ivocab[ix],
-            'weight': float(x[pix, ix]),
-            'idf': float(idf[ix]),
-        })
+    words = [{
+        'word': ivocab[ix],
+        'weight': float(x[pix, ix]),
+        'idf': float(idf[ix]),
+    } for ix in wixs]
     words.sort(key=lambda w: w['weight'], reverse=True)
-
-    # package everything up and render
-    paper = render_pid(pid)
-
-    # Random papers set as similar papers, for now
-    similar_pids, _ = time_rank()
-    similar_pids = [spid for spid in similar_pids if spid != pid][:4]
-    similar_papers = [render_pid(spid) for spid in similar_pids]
 
     context = default_context()
     context['paper'] = paper
     context['words'] = words
-    context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector. This is the actual summary that feeds into the SVM to power recommendations, so hopefully it is good and representative!"
+    context['words_desc'] = "The following are the tokens and their (tfidf) weight in the paper vector..."
     context['similar_papers'] = similar_papers
     context['folders'] = list(get_tags().keys())
 
     return render_template('inspect.html', **context)
+
 
 
 
@@ -538,7 +656,7 @@ def sub(pid=None, tag=None):
 
         # if the user doesn't have any tags, there is nothing to do
         if not g.user in tags_db:
-            return "user has no library of tags ¯\_(ツ)_/¯"
+            return "user has no library of tags"
 
         # fetch the user library object
         d = tags_db[g.user]
@@ -597,12 +715,29 @@ def login():
         username = request.form['username']
         if len(username) > 0: # one more paranoid check
             session['user'] = username
+            instance = SQLAlchemyInstance()
+            engine = instance.get_engine()
+            with engine.connect() as session2:
+                max_id_stmt = select(func.max(User.id))
+                max_id_result = session2.execute(max_id_stmt)
+                max_id = max_id_result.scalar() or 0
+
+                # Insert with new ID
+                new_id = max_id + 1
+
+                stmt = insert(User).values(id = new_id, name=username).returning(User.id)
+                user_id = session2.execute(stmt).scalar()
+                session2.commit()
+
 
     return redirect(url_for('profile'))
 
 @app.route('/logout')
 def logout():
+    redis_cli = redis.Redis(host='localhost', port=6379, db=0)
+    redis_cli.delete(g.user)
     session.pop('user', None)
+
     return redirect(url_for('profile'))
 
 # -----------------------------------------------------------------------------
@@ -617,6 +752,7 @@ def register_email():
         proper_email = re.match(r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$', email, re.IGNORECASE)
         if email == '' or proper_email: # allow empty email, meaning no email
             # everything checks out, write to the database
+
             with get_email_db(flag='c') as edb:
                 edb[g.user] = email
 
