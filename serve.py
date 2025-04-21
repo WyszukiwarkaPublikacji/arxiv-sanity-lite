@@ -139,7 +139,7 @@ def render_iid(iid):
     # render a single image with just the information we need for the UI
     idb = get_images()
     d = idb[iid]
-    path = get_image_path(d['base_id'], iid)
+    path = get_image_path(iid)
     url = path if os.path.isfile(path) else ''
 
     arxiv_id = d["base_id"]
