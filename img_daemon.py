@@ -11,7 +11,6 @@ from queue import Queue
 import threading
 from tqdm.asyncio import tqdm
 
-from pyinstrument import Profiler
 import cv2
 from aslite import config
 
@@ -124,10 +123,7 @@ async def fetch_papers(arxiv_ids, q, max_concurrency) -> None:
     bar.close()
 
 
-def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:
-    profiler = Profiler()
-    profiler.start()
-    
+def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:    
     last_id = get_last_id(idb)
     stream = PageStream(
         q, 
@@ -174,9 +170,6 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, num_ids) -> None:
                 
         except Exception as e:
             logging.warning("Exception while processing: %s" % e)
-        
-    profiler.stop()
-    profiler.print()
             
 
 if __name__ == "__main__":
