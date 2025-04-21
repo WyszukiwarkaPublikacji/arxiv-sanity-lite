@@ -60,6 +60,8 @@ def parse_response(response):
         j['_version'] = version
         j['_time'] = time.mktime(j['updated_parsed'])
         j['_time_str'] = time.strftime('%b %d %Y', j['updated_parsed'])
+        j["provider"] = "arxiv"
+        j["url"] = "http://arxiv.org/abs/" + idv
         # delete apparently spurious and redundant information
         del j['summary_detail']
         del j['title_detail']

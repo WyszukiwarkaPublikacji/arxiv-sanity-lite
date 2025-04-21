@@ -12,11 +12,6 @@ from pymilvus import MilvusClient, DataType
 from aslite import config
 
 # -----------------------------------------------------------------------------
-# global configuration
-
-DATA_DIR = "data"
-
-# -----------------------------------------------------------------------------
 # utilities for safe writing of a pickle file
 
 
@@ -108,15 +103,17 @@ flag='c': default mode, open for read/write, and creating the db/table if necess
 flag='r': open for read-only
 """
 
+# config variables
+DATA_DIR = os.environ.get("DATA_DIR", "./data/db")
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+MILVUS_URI = os.environ.get("MILVUS_URI", os.path.join(DATA_DIR, "embeddings.db"))
+
 # stores info about papers, and also their lighter-weight metadata
 PAPERS_DB_FILE = os.path.join(DATA_DIR, "papers.db")
 # stores account-relevant info, like which tags exist for which papers
 DICT_DB_FILE = os.path.join(DATA_DIR, "dict.db")
 IMAGES_DB_FILE = os.path.join(DATA_DIR, "images.db")
-EMBEDDING_DB_FILE = os.path.join(
-    DATA_DIR, "embeddings.db"
-)  # NOTE: once we set it up with docker it will probably need to be a standalone db
-
 
 def get_papers_db(flag="r", autocommit=True):
     assert flag in ["r", "c"]
@@ -155,7 +152,6 @@ def get_email_db(flag="r", autocommit=True):
     edb = SqliteDict(DICT_DB_FILE, tablename="email", flag=flag, autocommit=autocommit)
     return edb
 
-
 def get_images_db(flag="r", autocommit=True):
     assert flag in ["r", "c"]
     pdb = CompressedSqliteDict(
@@ -163,18 +159,11 @@ def get_images_db(flag="r", autocommit=True):
     )
     return pdb
 
-
-def setup_chemical_embeddings_collection(client: MilvusClient):
+def setup_chemical_embeddings_collection(client: MilvusClient):    
     schema = MilvusClient.create_schema(auto_id=False)
-    schema.add_field(
-        field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True
-    )
-    schema.add_field(
-        field_name="chemical_embedding",
-        datatype=DataType.BINARY_VECTOR,
-        dim=config.chemical_embedding_size,
-    )
-    schema.add_field(field_name="paper_id", datatype=DataType.INT64)
+    schema.add_field(field_name="id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="chemical_embedding", datatype=DataType.BINARY_VECTOR, dim=config.chemical_embedding_size)
+    schema.add_field(field_name="paper_id", datatype=DataType.VARCHAR, max_length=65535)
     schema.add_field(field_name="category", datatype=DataType.VARCHAR, max_length=127)
     schema.add_field(field_name="SMILES", datatype=DataType.VARCHAR, max_length=65535)
     schema.add_field(
@@ -196,7 +185,6 @@ def setup_chemical_embeddings_collection(client: MilvusClient):
         index_params=index_params,
         consistency_level=config.consistency_level,
     )
-
 
 def setup_image_embeddings_collection(client: MilvusClient):
     schema = MilvusClient.create_schema(auto_id=False)
@@ -235,7 +223,7 @@ def setup_image_embeddings_collection(client: MilvusClient):
 
 
 def get_embeddings_db():
-    client = MilvusClient(EMBEDDING_DB_FILE)
+    client = MilvusClient(MILVUS_URI)
 
     if not client.has_collection("chemical_embeddings"):
         setup_chemical_embeddings_collection(client)
@@ -244,6 +232,17 @@ def get_embeddings_db():
         setup_image_embeddings_collection(client)
 
     return client
+
+
+class EmbeddingsDB:
+    def __init__(self) -> MilvusClient:
+        self.client = get_embeddings_db()
+
+    def __enter__(self) -> MilvusClient:
+        return self.client
+
+    def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
+        self.client.close()
 
 
 # -----------------------------------------------------------------------------

@@ -22,7 +22,7 @@ def test_chemical_embeddings_db(): # temporary test code, should not be run on a
         "chemical_embedding": convert_bool_list_to_bytes(random_embeddings[i]),
         "tags": ["test", "test 1" if random.randint(0, 1)==0 else "test2"],
         "category": "chemistry?",
-        "paper_id": random.randint(1, 1000),
+        "paper_id": str(random.randint(1, 1000)),
         "SMILES": "CN=C=O"
     } for i in range(len(random_embeddings))
     ]

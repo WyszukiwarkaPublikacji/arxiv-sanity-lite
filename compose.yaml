@@ -1,0 +1,107 @@
+services:
+  app:
+    image: aslite
+    build: .
+    ports:
+      - "8080:8080" # web UI
+    environment:
+      DATA_DIR: "/data"
+      MILVUS_URI: "http://milvus:19530/"
+    volumes:
+      - "./data/db:/data"
+    depends_on:
+      - milvus
+
+  worker:
+    image: aslite
+    build: .
+    command: wait
+    # command: download [...]
+    # command: import [...]
+    # command: compute_textual
+    # command: compute_chemical
+    environment:
+      DATA_DIR: "/data"
+      MILVUS_URI: "http://milvus:19530/"
+      # only used by download.sh script:
+      DOWNLOADS_DIR: "/downloads"
+      KAGGLE_USERNAME: "changeme"
+      KAGGLE_KEY: "changeme"
+    volumes:
+      - "./data/db:/data"
+      - "./data/models_cache:/root/.data/DECIMER-V2"
+      - "./data/huggingface_cache:/root/.cache/huggingface"
+      - "./data/downloads:/downloads"
+    depends_on:
+      - milvus
+
+  milvus:
+    image: docker.io/milvusdb/milvus:v2.5.10
+    command:
+      - milvus
+      - run
+      - standalone
+    ports:
+      # - "19530:19530"  # API
+      - "9091:9091" # web UI, metrics, health
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ./data/milvus:/var/lib/milvus
+    security_opt:
+      - seccomp:unconfined
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    depends_on:
+      - etcd
+      - minio
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    command:
+      - etcd
+      - -advertise-client-urls
+      - http://etcd:2379
+      - -listen-client-urls
+      - http://0.0.0.0:2379
+      - --data-dir
+      - /etcd_data
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    volumes:
+      - ./data/etcd:/etcd_data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    image: docker.io/minio/minio:RELEASE.2023-03-20T20-16-18Z
+    command:
+      - minio
+      - server
+      - /minio_data
+      - --console-address
+      - :9001
+    ports:
+      - "9001:9001" # web console
+      # - "9000:9000" # API
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - ./data/minio:/minio_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3

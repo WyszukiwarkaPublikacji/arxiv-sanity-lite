@@ -42,7 +42,7 @@ def non_matching_ids(pdb, idb) -> list[str]:
     """Find all arxiv ids in papers.db that are either missing
     in data/images.db or have a newer version available."""
     non_matching_ids = set()
-    base_ids = {k: v for k, v in map(split_id, pdb.keys())}
+    base_ids = {k: v for k, v in map(split_id, (el for el in pdb.keys() if pdb[el]["provider"] == "arxiv"))}
 
     for d in idb.values():
         bid = d["base_id"]

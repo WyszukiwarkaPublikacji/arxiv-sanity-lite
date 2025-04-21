@@ -7,24 +7,55 @@ I am running a live version of this code on [arxiv-sanity-lite.com](https://arxi
 
 ![Screenshot](screenshot.jpg)
 
-#### To run
+## Running (Docker)
+```sh
+# Start the stack
+sudo ./eztoolbox.sh up
 
-To run this locally I usually run the following script to update the database with any new papers. I typically schedule this via a periodic cron job:
+# Download snapshots
+sudo ./eztoolbox.sh run download chemrxiv
+sudo ./eztoolbox.sh run download arxiv
 
-```bash
-#!/bin/bash
+# Import snapshots
+sudo ./eztoolbox.sh run import --chemrxiv
+sudo ./eztoolbox.sh run import --arxiv
 
-python3 arxiv_daemon.py --num 2000
+# Compute textual features
+sudo ./eztoolbox.sh run compute_textual
 
-if [ $? -eq 0 ]; then
-    echo "New papers detected! Running compute.py"
-    python3 compute.py
-else
-    echo "No new papers were added, skipping feature computation"
-fi
+# Compute chemical features (structures detection and fingerprinting). Takes a lot time, but Ctrl+C is your friend
+sudo ./eztoolbox.sh run compute_chemical  # 
+
+# Stop and remove the stack
+sudo ./eztoolbox.sh down
 ```
 
-You can see that updating the database is a matter of first downloading the new papers via the arxiv api using `arxiv_daemon.py`, and then running `compute.py` to compute the tfidf features of the papers. Finally to serve the flask server locally we'd run something like:
+## Running (old)
+for chemrxiv we use snapshots from the [chemrxiv-dashboard](https://github.com/chemrxiv-dashboard/chemrxiv-dashboard.github.io) project, and run the respective script.
+```bash
+python3 generate_db_from_chemrxiv.py -f allchemrxiv_data.json
+```
+We also need to extract SMILES from the papers(keep in mind it is an extremely long process that hasn't yet ever been fully completed).
+To do that we run the decimer.py script.
+```bash
+python3 decimer.py
+```
+However it only seems to work on older python versions. We had success running it on a dockerized debian 11, or under uv.
+Additionally it requries poppler, which on debian based system can by installed by running
+```bash
+sudo apt install poppler-utils
+```
+Finally to serve the flask server locally we'd run something like:
+
+On Windows sometimes it is better to run this line before:
+```bash
+$env:FLASK_APP="serve.py"
+```
+Also, if you want to use milvus standlone hosted on http://localhost:19530/ set:
+```bash
+$env:MILVUS_MODE="standalone"
+```
+Otherwise it will try to use milvus lite with database stored locally.
 
 ```bash
 export FLASK_APP=serve.py; flask run

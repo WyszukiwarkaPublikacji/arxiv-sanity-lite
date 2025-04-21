@@ -1,3 +1,6 @@
+
+# This script doesn't work!
+
 """
 Iterates over the current database and makes best effort to download the papers,
 convert them to thumbnail images and save them to disk, for display in the UI.
@@ -101,4 +104,3 @@ for i, key in enumerate(keys):
     tmp_pdf = os.path.join(TMP_DIR, 'paper.pdf')
     if os.path.isfile(tmp_pdf):
         os.remove(tmp_pdf)
-

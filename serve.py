@@ -36,6 +36,10 @@ from aslite.db import (
     load_features,
 )
 
+from rdkit import Chem
+from aslite.fingerprint import calculate_embedding
+
+
 # -----------------------------------------------------------------------------
 # inits and globals
 
@@ -123,15 +127,16 @@ def render_pid(pid):
     thumb_url = thumb_path if os.path.isfile(thumb_path) else ""
     d = pdb[pid]
     return dict(
-        weight=0.0,
-        id=d["_id"],
-        title=d["title"],
-        time=d["_time_str"],
-        authors=", ".join(a["name"] for a in d["authors"]),
-        tags=", ".join(t["term"] for t in d["tags"]),
-        utags=[t for t, pids in tags.items() if pid in pids],
-        summary=d["summary"],
-        thumb_url=thumb_url,
+        weight = 0.0,
+        id = d['_id'],
+        url = d['url'],
+        title = d['title'],
+        time = d['_time_str'],
+        authors = ', '.join(a['name'] for a in d['authors']),
+        tags = ', '.join(t['term'] for t in d['tags']),
+        utags = [t for t, pids in tags.items() if pid in pids],
+        summary = d['summary'],
+        thumb_url = thumb_url,
     )
 
 
@@ -244,12 +249,47 @@ def search_rank(q: str = ""):
     scores = [p[0] for p in pairs]
     return pids, scores
 
+def chemical_formulas_rank(input_SMILES: str = '', limit: int = 100):
+    client = get_embeddings_db()
 
-def chemical_formulas_rank(q: str = ""):
-    # Here we will implement logic for our chemical formulas search engine,
-    # but for now, we will just return random results.
+    # Convert the input SMILES into a fingerprint and then into a binary vector for Milvus.
+    fp = calculate_embedding(input_SMILES)
+    if fp is None:
+        raise ValueError("Invalid input SMILES string.")
 
-    return random_rank()
+    # Run a Milvus search query using the binary vector.
+    # Adjust the search "limit" as needed to capture enough SMILES entries for each paper.
+    search_results = client.search(
+        collection_name="chemical_embeddings",
+        data=[fp],
+        limit=limit,
+        anns_field="chemical_embedding",
+        output_fields=["paper_id", "SMILES"],
+        filter="",  # If you want to restrict the search, add your filter here.
+        search_params={"metric_type": "JACCARD"}
+    )
+
+    # Milvus returns a list (one per query vector) of hits. Each hit typically includes the field values and a score.
+    # Note: When using JACCARD in Milvus, the score is a distance so lower values mean better matches.
+    # We convert this to a similarity by computing: similarity = 1 - distance.
+    paper_scores = {}
+    # Iterate over the hits for our single query.
+    for hit in search_results[0]:
+        # Assume each hit.entity is a dictionary containing "paper_id" and "SMILES".
+        print(hit)
+        paper_id = str(hit['entity']['paper_id'])
+        # Convert distance to similarity.
+        similarity = 1 - hit['distance']
+        # For each paper, keep the maximum similarity encountered.
+        if paper_id not in paper_scores or paper_scores[paper_id] < similarity:
+            paper_scores[paper_id] = similarity
+
+    # Sort the papers by similarity score (highest similarity first)
+    sorted_results = sorted(paper_scores.items(), key=lambda x: x[1], reverse=True)
+    pids, scores = zip(*sorted_results) if sorted_results else ([], [])
+    print(pids)
+    return list(pids), list(scores)
+
 
 
 def image_rank(q: str, img: Image.Image):
