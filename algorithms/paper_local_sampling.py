@@ -40,7 +40,7 @@ class PaperLocalSampling(Algorithm):
             item_vector = np.array(self.papers_db[item]['paper_vector'])
             if not any(np.array_equal(item_vector, v) for v in read_vectors):
                 read_vectors.append(item_vector)
-                return self.papers_db[str(item)]['_id']
+                return item
         return None
 
 

@@ -10,7 +10,7 @@ from db.Milvus.MilvusInstance import MilvusInstance
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Stałe konfiguracyjne
-DIM = 100  # Liczba wymiarów po redukcji SVD
+DIM = 10  # Liczba wymiarów po redukcji SVD
 
 def reduce_dimensionality(features: Dict) -> np.ndarray:
     svd = TruncatedSVD(n_components=DIM, random_state=42)
@@ -38,7 +38,7 @@ def preprocess():
     counter = 0
     for arxiv_id,vector in zip(features['pids'],X_reduced):
         current_paper = papers_db[arxiv_id]
-        if 'paper_vector' in current_paper.keys():
+        if 'paper_vector' in current_paper.keys() and vector.shape == current_paper['paper_vector'].shape and (vector == current_paper['paper_vector']).all():
             continue
         current_paper['paper_vector'] = vector
         papers_db[arxiv_id] = current_paper

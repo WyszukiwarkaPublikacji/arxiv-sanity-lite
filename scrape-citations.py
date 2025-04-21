@@ -2,25 +2,16 @@ import requests
 import os
 import shutil
 import bibtexparser
-import random
 from pathlib import Path
 from aslite.db import get_papers_db
 import sys
-from json import dumps
 import re
-import asyncio
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from sqlalchemy import insert, table, select
+from sqlalchemy import insert, select
 from db.SQLLite.OrmDB import Citations
-from sqlalchemy.orm import Session
 from db.SQLLite.OrmDB import Papers
 from db.SQLLiteAlchemyInstance import SQLAlchemyInstance
 from db.Milvus.MilvusSetterDB import MilvusSetterDB
-from db.Milvus.MilvusMetaRepository import MilvusMetaRepository
 from pymilvus import connections
-
-
-
 
 def find_files(folder_path: str, ext: str):
     return list(Path(folder_path).rglob(f'*{ext}'))
@@ -151,9 +142,7 @@ def main():
         host="localhost",
         port="19530"
     )
-
     
-        
     pdb = get_papers_db(flag='r')
     keys = list(pdb.keys())
 
@@ -164,16 +153,7 @@ def main():
                 stmt = insert(Citations).values(origin_publication_id=key, citation_publication_id=citation)
                 session.execute(stmt)
                 session.commit()
-    
 
-
-        
-    
-
-    
-        
-
-    
 
 if __name__ == '__main__':
     main()

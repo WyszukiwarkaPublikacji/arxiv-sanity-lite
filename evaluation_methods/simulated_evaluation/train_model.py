@@ -26,7 +26,7 @@ def train_model(train_dataset: Dataset, eval_dataset: Dataset, dimensionality: i
     model = SimulatedEvaluationModel(num_experts=NUM_EXPERTS, dimensionality=dimensionality, hidden_units=HIDDEN_UNITS, layers=LAYERS).to(DEVICE)
     
     if os.path.exists(MODEL_PATH):
-        logging.info(f"Model file found at {MODEL_PATH}. Loading model instead of training.")
+        logging.info(f"Znaleziono model w pliku {MODEL_PATH}. Ładowanie modelu zamiast trenowania.")
         model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
         model.eval()
         return model
@@ -51,7 +51,7 @@ def train_model(train_dataset: Dataset, eval_dataset: Dataset, dimensionality: i
         for batch_idx, (X, y) in enumerate(tqdm(train_dataloader)):
             X = X.to(DEVICE)
             y = y.to(DEVICE)
-                        
+                                    
             optimizer.zero_grad()
             X_set = X[:, :-1]
             X_vec = X[:, -1]
@@ -93,6 +93,6 @@ def train_model(train_dataset: Dataset, eval_dataset: Dataset, dimensionality: i
 
     # Zapisz wytrenowany model do pliku
     torch.save(model.state_dict(), MODEL_PATH)
-    logging.info(f"Model saved to {MODEL_PATH}")
+    logging.info(f"Model zapisany do {MODEL_PATH}")
 
     return model

@@ -35,7 +35,7 @@ def group_papers_by_authors(papers_db: CompressedSqliteDict) -> Tuple[List[str],
 
 def pad_tensor(seq: torch.Tensor, target_length: int) -> torch.Tensor:
     if seq.shape[0] < target_length:
-        pad = torch.full((target_length - seq.shape[0], seq.shape[1]), 0.0)
+        pad = torch.full((target_length - seq.shape[0], seq.shape[1]), 0.0).to(seq.device)
         seq = torch.cat([pad, seq], dim=0)
     return seq
 

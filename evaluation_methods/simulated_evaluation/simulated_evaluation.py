@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import random
 from papers.paper import Paper
-from tqdm.auto import tqdm
+from algorithms.algorithm_data_preprocessor import DIM
 
 NO_INTEREST_IN_A_ROW_THRESHOLD = 3
 RUNS_PER_METHOD = 1000
@@ -18,15 +18,18 @@ RANDOM_CLICK_RATE = 0.1
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 class SimulatedEvaluation(EvaluationMethod):
-    def __init__(self, papers_db: CompressedSqliteDict):
+    def __init__(self, papers_db: CompressedSqliteDict, runs=RUNS_PER_METHOD, begin_author=0, end_author=-1):
         super().__init__(papers_db)
         
+        self.runs = runs
         self.papers_db = papers_db
         # Zacznę od wytrenowania modelu, który przewidzi łączne prawdopodobieństwo, że publikacja należy do zbioru opublikowanych
         train_dataset, eval_dataset = prepare_data(papers_db)
         print(f"Skonstruowano zbiory danych o wielkościach: {len(train_dataset)}, {len(eval_dataset)}")
-        self.model = train_model(train_dataset, eval_dataset, dimensionality=100)
+        self.model = train_model(train_dataset, eval_dataset, dimensionality=DIM)
+        
         self.evaluation_authors = read_test_authors()
+        self.evaluation_authors = self.evaluation_authors[begin_author:end_author]
     
     # Zastosowanie wzorku wyprowadzonego z Twierdzenia Bayesa
     @classmethod
@@ -63,7 +66,7 @@ class SimulatedEvaluation(EvaluationMethod):
         
         run_lengths = []
         # Każdy algorytm jest ewaluowany na RUNS_PER_METHOD losowych osobach
-        for run in tqdm(range(RUNS_PER_METHOD)):
+        for run in range(self.runs):
             author = random.choice(self.evaluation_authors)
             initial_papers = [Paper.from_id(paper, self.papers_db) for paper in papers_by_authors[1][author]]
             

@@ -9,10 +9,12 @@ class MilvusSetterDB:
 
     @staticmethod
     def create_collectio_metas() -> bool:
+        from algorithms.algorithm_data_preprocessor import DIM
+        
         try:
             fields = [
                 FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
-                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=100)
+                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=DIM)
             ]
 
             MilvusInstance.connect_to_instance()
@@ -40,14 +42,16 @@ class MilvusSetterDB:
 
     @staticmethod
     def create_collection_papers() -> bool:
+        from algorithms.algorithm_data_preprocessor import DIM
+        
         try:
             fields = [
                 FieldSchema(name="key", dtype=DataType.VARCHAR, max_length=512, is_primary=True),
-                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=100)
+                FieldSchema(name="value", dtype=DataType.FLOAT_VECTOR, dim=DIM)
             ]
 
             MilvusInstance.connect_to_instance()
-
+            
             if utility.has_collection(MilvusSetterDB.COLLECTION_NAME2):
                 print(f"Collection '{MilvusSetterDB.COLLECTION_NAME2}' already exists.")
                 return True
