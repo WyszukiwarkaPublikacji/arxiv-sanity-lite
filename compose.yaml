@@ -6,7 +6,7 @@ services:
       - "8080:8080" # web UI
     environment:
       DATA_DIR: "/data"
-      MILVUS_URI: "http://milvus:19530/"
+      MILVUS_PATH: "http://milvus:19530/"
     volumes:
       - "./data/db:/data"
     depends_on:
@@ -22,7 +22,7 @@ services:
     # command: compute_chemical
     environment:
       DATA_DIR: "/data"
-      MILVUS_URI: "http://milvus:19530/"
+      MILVUS_PATH: "http://milvus:19530/"
       # only used by download.sh script:
       DOWNLOADS_DIR: "/downloads"
       KAGGLE_USERNAME: "changeme"
