@@ -27,11 +27,11 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         batch = random.sample(self.buffer, batch_size)
-
-        states = torch.tensor(np.array([e.state for e in batch]))
-        actions = torch.tensor(np.array([e.action for e in batch]))
+                
+        states = torch.stack([e.state for e in batch])
+        actions = torch.stack([e.action for e in batch])
         rewards = torch.tensor([e.reward for e in batch])
-        next_states = torch.tensor(np.array([e.next_state for e in batch]))
+        next_states = torch.stack([e.next_state for e in batch])
         done_signals = torch.tensor([e.done_signal for e in batch])
 
         return states, actions, rewards, next_states, done_signals

@@ -7,7 +7,7 @@ import time
 
 from tqdm import tqdm
 
-from aslite.db import get_metas_db, get_papers_db
+from aslite.db import get_metas_db, get_papers_db, get_email_db, get_images_db, get_last_active_db, get_tags_db
 
 if __name__ == "__main__":
 
@@ -27,6 +27,10 @@ if __name__ == "__main__":
 
     pdb = get_papers_db(flag="c")
     mdb = get_metas_db(flag="c")
+    edb = get_email_db(flag="c")
+    ldb = get_last_active_db(flag="c")
+    idb = get_images_db(flag="c")
+    tdb = get_tags_db(flag="c")
     if args.arxiv and args.chemrxiv:
         logging.error("specify either chemrxiv or arxiv")
         sys.exit(1)

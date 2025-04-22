@@ -481,9 +481,10 @@ def main():
                 papers_history.append(Paper.from_id(user_history[i][0], pdb))
 
             recommend_instance = RLAlgorithm(get_papers_db())
-            result_recommendations, scores = recommend_instance.recommend(papers_history, 20)
+            result_recommendations = recommend_instance.recommend(papers_history, 5)
             for i in range(0, len(result_recommendations)):
                 pids.append(result_recommendations[i].arxiv_id)
+                scores.append(i)
 
         else:
             if opt_rank == 'search':

@@ -11,9 +11,9 @@ from db.SQLLite.OrmDB import creation
 def main():
     instance = SQLAlchemyInstance()
 
-    # MilvusSetterDB.create_collectio_metas()
-    # MilvusSetterDB.create_collection_papers()
-    creation()
+    MilvusSetterDB.create_collectio_metas()
+    MilvusSetterDB.create_collection_papers()
+    #creation()
 
     return None
 if __name__ == "__main__":
