@@ -3,20 +3,21 @@ import random
 import numpy as np
 import torch
 from aslite.db import CompressedSqliteDict
+from aslite.env import DATA_DIR
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Tuple, List, Dict
 from evaluation_methods.simulated_evaluation.disk_dataset import DiskDataset
 
-TEST_AUTHORS_PATH = "data/test_authors.txt"
-DATA_META_PATH = "data/data_meta.npz"
+TEST_AUTHORS_PATH = os.path.join(DATA_DIR, "test_authors.txt")
+DATA_META_PATH = os.path.join(DATA_DIR, "data_meta.npz")
 
-X_TRAIN_PATH = "data/x_train.dat"
-Y_TRAIN_PATH = "data/y_train.dat"
+X_TRAIN_PATH = os.path.join(DATA_DIR, "x_train.dat")
+Y_TRAIN_PATH = os.path.join(DATA_DIR, "y_train.dat")
 
-X_TEST_PATH = "data/x_test.dat"
-Y_TEST_PATH = "data/y_test.dat"
+X_TEST_PATH = os.path.join(DATA_DIR, "x_test.dat")
+Y_TEST_PATH = os.path.join(DATA_DIR, "y_test.dat")
 
 def group_papers_by_authors(papers_db: CompressedSqliteDict) -> Tuple[List[str], Dict[str, List[str]]]:
     ids = []

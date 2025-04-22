@@ -4,6 +4,7 @@ from aslite.db import CompressedSqliteDict
 from algorithms.rl_algorithm.replay_buffer import ReplayBuffer
 from algorithms.rl_algorithm.rl_algorithm import RLAlgorithm
 import aslite.db as db
+from aslite.env import DATA_DIR
 
 import torch
 import torch.nn.functional as F
@@ -36,9 +37,9 @@ EVALUATE_EVERY = 400
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SEED = 12321
 
-MODEL_PATH = "data/trained_policy.pth"
-Q_MODEL0_PATH = "data/trained_q0.pth"
-Q_MODEL1_PATH = "data/trained_q1.pth"
+MODEL_PATH = os.path.join(DATA_DIR, "trained_policy.pth")
+Q_MODEL0_PATH = os.path.join(DATA_DIR, "trained_q0.pth")
+Q_MODEL1_PATH = os.path.join(DATA_DIR, "trained_q1.pth")
 
 def train_policy(papers_db: CompressedSqliteDict, recommend_count: int, dimensionality: int, force_train=False) -> Policy:
     torch.manual_seed(SEED)

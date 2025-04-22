@@ -8,6 +8,7 @@ import ultralytics
 import numpy as np
 import requests
 from tqdm import tqdm
+from aslite.env import DATA_DIR
 
 
 WEIGHTS_URL = "https://drive.google.com/uc?export=download&id=12wkHnhD49uCoBIEUrJ_IVHpHutu0qNCe"
@@ -37,7 +38,7 @@ def distance_matrix(a, b, wx=1.0, wy=1.0, w_above=1.0):
 
 
 class FigureExtractor:
-    def __init__(self, weights_path="./data/weights/yolo.pt"):
+    def __init__(self, weights_path=os.path.join(DATA_DIR, "yolo.pt")):
         self.model = self._load_model(weights_path)
 
     def _download_weights(self, path):

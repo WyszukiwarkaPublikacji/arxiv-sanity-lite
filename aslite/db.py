@@ -10,6 +10,7 @@ from sqlitedict import SqliteDict
 from contextlib import contextmanager
 from pymilvus import MilvusClient, DataType
 from aslite import config
+from aslite.env import DATA_DIR, MILVUS_PATH
 
 # -----------------------------------------------------------------------------
 # utilities for safe writing of a pickle file
@@ -102,12 +103,6 @@ some docs to self:
 flag='c': default mode, open for read/write, and creating the db/table if necessary
 flag='r': open for read-only
 """
-
-# config variables
-DATA_DIR = os.environ.get("DATA_DIR", "./data/db")
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-MILVUS_PATH = os.environ.get("MILVUS_PATH", os.path.join(DATA_DIR, "embeddings.db"))
 
 # stores info about papers, and also their lighter-weight metadata
 PAPERS_DB_FILE = os.path.join(DATA_DIR, "papers.db")

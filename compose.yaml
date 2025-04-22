@@ -8,7 +8,7 @@ services:
       DATA_DIR: "/data"
       MILVUS_PATH: "http://milvus:19530/"
     volumes:
-      - "./data/db:/data"
+      - "./data/data:/data"
     depends_on:
       - milvus
 
@@ -28,7 +28,7 @@ services:
       KAGGLE_USERNAME: "changeme"
       KAGGLE_KEY: "changeme"
     volumes:
-      - "./data/db:/data"
+      - "./data/data:/data"
       - "./data/decimer_cache:/root/.data/DECIMER-V2"
       - "./data/huggingface_cache:/root/.cache/huggingface"
       - "./data/downloads:/downloads"

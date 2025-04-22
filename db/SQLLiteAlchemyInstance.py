@@ -1,12 +1,11 @@
 import sys
 import os
 import sqlalchemy as db
+from aslite.env import DATA_DIR
 
 class SQLAlchemyInstance:
     def __init__(self):
-        BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        SQLITE_PATH = os.path.join(BASE_DIR, 'data', 'papers.db')
-        sys.path.append(BASE_DIR)
+        SQLITE_PATH = os.path.join(DATA_DIR, "papers.db")
 
         self.engine = db.create_engine("sqlite:////" + SQLITE_PATH)
 
