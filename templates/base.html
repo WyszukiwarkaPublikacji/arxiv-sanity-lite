@@ -18,6 +18,9 @@
     <script type="text/javascript" id="MathJax-script" async
         src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
 </head>
 
 
@@ -33,13 +36,15 @@
     </div>
 </div>
 
+{% block variables %}{% endblock %}
+
 {% block content %}{% endblock %}
 
-<script>
+<!-- <script>
 document.getElementById('toggle-theme').onclick = () => {
     document.body.classList.toggle('dark-theme');
 };
-</script>
+</script> -->
 {% block elements %}{% endblock %}
 </body>
 </html>

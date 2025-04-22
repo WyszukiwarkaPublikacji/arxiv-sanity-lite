@@ -7,7 +7,7 @@ class SQLAlchemyInstance:
     def __init__(self):
         SQLITE_PATH = os.path.join(DATA_DIR, "papers.db")
 
-        self.engine = db.create_engine("sqlite:////" + SQLITE_PATH)
+        self.engine = db.create_engine("sqlite:///" + SQLITE_PATH)
 
         self.conn = self.engine.connect()
         self.metadata = db.MetaData()
