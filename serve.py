@@ -434,8 +434,8 @@ def main():
         opt_pid = request.form.get('q', '')  # pid to find nearest neighbors to
     elif(opt_rank=='chemical_formulas'):
         opt_smiles_input = request.form.get('q', '')
-    elif(opt_rank=='image'):
-        opt_image_input = request.files.get("image_input")
+
+    opt_image_input = request.files.get("image_input")
 
     # if a query is given, override rank to be of type "search"
     # this allows the user to simply hit ENTER in the search field and have the correct thing happen
