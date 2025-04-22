@@ -15,8 +15,7 @@ from random import shuffle
 import numpy as np
 from sklearn import svm
 
-from image_search import hybrid_search, get_image_path
-from image_search.embedding import FigureVectorizer
+from image_search import hybrid_search, get_image_path, FigureVectorizer
 
 vectorizer = FigureVectorizer("cuda" if torch.cuda.is_available() else "cpu")
 

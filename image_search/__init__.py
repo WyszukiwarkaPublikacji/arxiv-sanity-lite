@@ -6,20 +6,14 @@ from image_search.extraction import FigureExtractor
 from image_search.embedding import FigureVectorizer
 
 
-IMAGES_DIR = 'static/images'
-os.makedirs(IMAGES_DIR, exist_ok=True)
+def get_image_path(id, path='static/images') -> str:
+    os.makedirs(path, exist_ok=True)
+    return os.path.join(path, str(id) + '.jpg')
 
 
-def get_image_path(id):
-    return os.path.join(IMAGES_DIR, str(id) + '.jpg')
-
-
-TMP_DIR = "tmp"
-os.makedirs(TMP_DIR, exist_ok=True)
-
-
-def get_paper_path(arxiv_id) -> str:
-    return os.path.join(TMP_DIR, arxiv_id + ".pdf")
+def get_paper_path(arxiv_id, path="data/papers") -> str:
+    os.makedirs(path, exist_ok=True)
+    return os.path.join(path, arxiv_id + ".pdf")
 
 
 def load_models():

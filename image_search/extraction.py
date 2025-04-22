@@ -37,7 +37,7 @@ def distance_matrix(a, b, wx=1.0, wy=1.0, w_above=1.0):
 
 
 class FigureExtractor:
-    def __init__(self, weights_path="./data/weights/weights.pt"):
+    def __init__(self, weights_path="./data/weights/yolo.pt"):
         self.model = self._load_model(weights_path)
 
     def _download_weights(self, path):
