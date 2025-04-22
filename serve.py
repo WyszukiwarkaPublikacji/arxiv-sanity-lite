@@ -417,17 +417,25 @@ def main():
     default_skip_have = "no"
 
     # override variables with any provided options via the interface
-    opt_rank = request.form.get("rank", default_rank)  # rank type. search|tags|pid|time|random
-    opt_q = request.form.get("q", "")  # search request in the text box
-    opt_tags = request.form.get("tags", default_tags)  # tags to rank by if opt_rank == 'tag'
-    opt_pid = request.form.get("pid", "")  # pid to find nearest neighbors to
-    opt_time_filter = request.form.get("time_filter", default_time_filter)  # number of days to filter by
-    opt_skip_have = request.form.get("skip_have", default_skip_have)  # hide papers we already have?
-    opt_svm_c = request.form.get("svm_c", "")  # svm C parameter
-    opt_smiles_input = request.form.get("smiles_input", "")
-    opt_page_number = request.form.get("page_number", "1")  # page number for pagination
+    opt_rank = request.form.get('rank', default_rank) # rank type. search|tags|pid|time|random
+    opt_q = request.args.get('q', '')
+    opt_tags = request.args.get('tags', default_tags)
+    opt_pid = request.args.get('pid', '')
+    opt_time_filter = request.args.get('time_filter', default_time_filter) # number of days to filter by
+    opt_skip_have = request.args.get('skip_have', default_skip_have) # hide papers we already have?
+    opt_svm_c = request.args.get('svm_c', '') # svm C parameter
+    opt_page_number = request.args.get('page_number', '1') # page number for pagination
 
-    opt_image_input = request.files.get("image_input")
+    if(opt_rank=='search'):
+        opt_q = request.form.get('q', '') # search request in the text box
+    elif(opt_rank=='tags'):
+        opt_tags = request.form.get('q', default_tags)  # tags to rank by if opt_rank == 'tag'
+    elif(opt_rank=='pid'):
+        opt_pid = request.form.get('q', '')  # pid to find nearest neighbors to
+    elif(opt_rank=='chemical_formulas'):
+        opt_smiles_input = request.form.get('q', '')
+    elif(opt_rank=='image'):
+        opt_image_input = request.files.get("image_input")
 
     # if a query is given, override rank to be of type "search"
     # this allows the user to simply hit ENTER in the search field and have the correct thing happen
