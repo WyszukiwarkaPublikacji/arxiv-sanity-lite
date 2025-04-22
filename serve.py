@@ -406,7 +406,7 @@ def add_seen_publication(pid):
         print("Added new seen publication.")
 
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', "POST"])
 def main():
 
     # default settings
@@ -527,18 +527,6 @@ def main():
                 i for i, pid in enumerate(pids) if (tnow - kv[pid]["_time"]) < deltat
             ]
             pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
-        mdb = get_metas()
-        kv = {
-            k: v for k, v in mdb.items()
-        }  # read all of metas to memory at once, for efficiency
-        tnow = time.time()
-        deltat = (
-                int(opt_time_filter) * 60 * 60 * 24
-        )  # allowed time delta in seconds
-        keep = [
-            i for i, pid in enumerate(pids) if (tnow - kv[pid]["_time"]) < deltat
-        ]
-        pids, scores = [pids[i] for i in keep], [scores[i] for i in keep]
 
         # optionally hide papers we already have
         if opt_skip_have == "yes":
