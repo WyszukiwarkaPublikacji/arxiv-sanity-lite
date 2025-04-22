@@ -35,16 +35,15 @@ var move_page = function(int_offset) {
 <div id="log-fun-warn">(hi! just btw you have to be logged in to be able to add/delete/curate tags for papers and get recommendations)</div>
 {% endif %}
 
-<div id="controls">
-    <div>
-
-        <!-- the choice box, allowing us to sort, rank, slice and dice papers -->
-        <div id="cbox">
-            <form action="/" method="post" enctype="multipart/form-data">
-                <!-- the search box, allowing us to search by keywords -->
-                <input name="q" type="text" id="qfield" value="{{ gvars.search_query }}">
-
-                <!-- rank type: one of tags, pid, time, or random -->
+{% block content %}
+<div id="main-header">
+    <h1><span class="title-first">Research Papers</span><br><span class="title-second">Search Engine</span></h1>
+    <form action="/" method="post" class="search-form" enctype="multipart/form-data">
+        <center>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="q" placeholder="Find keyword, author, SMILES or title..." id="search-bar" value="{{ gvars.search_query }}">
+                <button type="submit" id="search-btn">Search</button>
                 <label for="rank_type">Rank by:</label>
                 <select name="rank" id="rank_select">
                     <option value="search" {{ gvars.rank == 'search' and 'selected' }}>search</option>
@@ -55,7 +54,7 @@ var move_page = function(int_offset) {
                     <option value="chemical_formulas" {{ gvars.rank == 'chemical_formulas' and 'selected' }}>chemical formulas</option>
                     <option value="image" {{ gvars.rank == 'image' and 'selected' }}>image</option>
                 </select>
-
+            </div>
                 <!-- current tags, simply in a text field -->
                 <label for="tags">tags: </label>
                 <input name="tags" type="text" id="tags_field" value="{{ gvars.tags }}">
@@ -81,27 +80,40 @@ var move_page = function(int_offset) {
                     <option value="yes" {{ gvars.skip_have == 'yes' and 'selected' }}>yes</option>
                     <option value="no" {{ gvars.skip_have == 'no' and 'selected' }}>no</option>
                 </select>
-                
-                <br>
-                <label for="image_input">Upload image: </label>
-                <input name="image_input" type="file" id="image_input" accept="image/*">
-                <br>
 
                 <input type="submit" value="Submit">
-            </form>
+
         </div>
         <!-- some hand-coded common choices for faster and more convenient operation -->
-        <div id="cbox_fast">
-            Shortcuts:
-            <a href="/?rank=tags&tags=all&time_filter=7&skip_have=yes">recommend over last week</a>
-            <a href="/?rank=tags&tags=all&time_filter=3&skip_have=yes">recommend over last 3 days</a>
-            <a href="/?rank=time">recent</a>
-            <a href="/?rank=random&time_filter=7">random last week</a>
-        </div>
-    </div>
-    <div>
+         <div id="cbox_fast">
+                Shortcuts:
+                <a href="/?rank=tags&tags=all&time_filter=7&skip_have=yes">recommend over last week</a>
+                <a href="/?rank=tags&tags=all&time_filter=3&skip_have=yes">recommend over last 3 days</a>
+                <a href="/?rank=time">recent</a>
+                <a href="/?rank=random&time_filter=7">random last week</a>
+            </div>
+            <br />
+            <div class="search-container" id="image_search_window" style="display: none;">
+                <p>
+                    <b>Image search:</b>
+                    &emsp;<input name="image_input" type="file" id="image_input" accept="image/*">
+                </p>
+            </div>
+            <script>
+                var rankSelect = document.getElementById('rank_select');
+                rankSelect.onchange = (event) => {
+                    if(rankSelect.value == "image")
+                    {
+                        document.getElementById('image_search_window').style.display = 'block';
+                    } else {
+                        document.getElementById('image_search_window').style.display = 'none';
+                    }
+                }
+            </script>
+        </center>
+    </form>
 
-    </div>
+
 </div>
 
 {% if user and tags %}
@@ -135,3 +147,4 @@ var move_page = function(int_offset) {
 
 <script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
 {% endblock %}
+

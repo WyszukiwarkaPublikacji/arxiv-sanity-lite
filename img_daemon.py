@@ -165,7 +165,7 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None
                 
         except Exception as e:
             logging.warning("Exception while processing: %s" % e)
-            
+
 
 if __name__ == "__main__":
     logging.basicConfig(
