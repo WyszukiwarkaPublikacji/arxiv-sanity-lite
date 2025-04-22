@@ -7,7 +7,9 @@ TEXT_MODEL = "all-MiniLM-L6-v2"
 
 
 class FigureVectorizer:
-    def __init__(self, device):
+    def __init__(self, device = None):
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
         self.text_vectorizer = SentenceTransformer(TEXT_MODEL, device=device)
         

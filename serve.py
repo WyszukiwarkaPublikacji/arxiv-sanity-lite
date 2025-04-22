@@ -17,7 +17,7 @@ from sklearn import svm
 
 from image_search import hybrid_search, get_image_path, FigureVectorizer
 
-vectorizer = FigureVectorizer("cuda" if torch.cuda.is_available() else "cpu")
+vectorizer = FigureVectorizer()
 
 from flask import g  # global session-level object
 from flask import Flask, redirect, render_template, request, session, url_for

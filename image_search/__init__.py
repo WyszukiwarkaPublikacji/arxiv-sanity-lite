@@ -17,10 +17,8 @@ def get_paper_path(arxiv_id, path="data/papers") -> str:
 
 
 def load_models():
-    device = "cuda" if torch.cuda.is_available() else 'cpu'
-    
     extractor = FigureExtractor()
-    vectorizer = FigureVectorizer(device)
+    vectorizer = FigureVectorizer()
     return extractor, vectorizer
 
 
