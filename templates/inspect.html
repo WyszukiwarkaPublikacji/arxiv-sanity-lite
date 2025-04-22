@@ -1,21 +1,101 @@
 {% extends "base.html" %}
 
-{% block variables %}
-<script>
-var paper = {{ paper | tojson }};
-var words = {{ words | tojson }};
-var words_desc = {{ words_desc | tojson }};
-</script>
-{% endblock %}
-
 {% block content %}
-<div id="wrap">
-</div>
-<div id="wordwrap">
-</div>
-{% endblock %}
+<main class="main-container">
+    <section class="article-section">
+        <div class="article-header">
+            <h1>{{ paper.title }}</h1>
+            <a href="https://arxiv.org/pdf/{{ paper.id }}" target="_blank" class="pdf-download">Download PDF (arxiv)</a>
+            {% if session['focus_mode'] == 1 %}
+            <a href="/settings" class="pdf-download">Focus Mode settings</a>
+            {% endif %}
+        </div>
+        <br />
+        <div class="pdf-container">
+            <object
+              data="https://arxiv.org/pdf/{{ paper.id }}"
+              type="application/pdf">
+              <p> Your browser doesn't handle PDF displaying
+                 <a href="https://arxiv.org/pdf/{{ paper.id }}">click to download PDF.</a>.
+              </p>
+            </object>
+        </div>
+    </section>
 
-{% block elements %}
-<script src="{{ url_for('static', filename='paper_detail.js') }}" type="text/babel"></script>
-<script src="{{ url_for('static', filename='word_list.js') }}" type="text/babel"></script>
+    {% if session['focus_mode'] != 1 %}
+    <aside class="sidebar-section">
+        <!-- Authors and publication date -->
+
+        <div class="author-box">
+            <h2>{{ paper.authors }}</h2>
+            <div class="date">📅 {{ paper.time }}</div>
+        </div>
+
+
+        <div class="folder-section author-box">
+            <p>
+              <label>Add to folder:
+                <select id="folder-select">
+                  <option value=""></option>
+                  {% for folder in folders %}
+                    <option value="{{ folder }}">{{ folder }}</option>
+                  {% endfor %}
+                  <option value="__new__">New folder</option>
+                </select>
+              </label>
+              <input type="text" id="new-folder-name" placeholder="Folder name" style="display:none" />
+              <button id="add-to-folder-btn" class="btn">Add</button>
+            </p>
+        </div>
+
+
+        <div class="abstract-section author-box">
+            <h3>Abstract</h3>
+            <p>{{ paper.summary }}</p>
+            <div class="tags">
+                {% for tag in paper.tags.split(', ') %}
+                    <span class="tag">{{ tag }}</span>
+                {% endfor %}
+                {% for utag in paper.utags %}
+                    <span class="tag">{{ utag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+
+
+        <div class="related-articles">
+            <h3>Similar papers</h3>
+            {% for sim_paper in similar_papers %}
+            <div class="related-card" onClick="window.location.href='?pid={{ sim_paper.id }}';">
+                <h4>{{ sim_paper.title }}</h4>
+                <p>Autorzy: {{ sim_paper.authors }}</p>
+                <div class="tags">
+                    {% for tag in sim_paper.tags.split(', ') %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                    {% for utag in sim_paper.utags %}
+                        <span class="tag">{{ utag }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+    {% endif %}
+</main>
+
+<script>
+  const sel = document.getElementById('folder-select');
+  const input = document.getElementById('new-folder-name');
+  sel.addEventListener('change', () => {
+    input.style.display = sel.value === '__new__' ? 'inline-block' : 'none';
+  });
+  document.getElementById('add-to-folder-btn').onclick = () => {
+    let folder = sel.value;
+    if (folder === '__new__') folder = input.value.trim();
+    if (!folder) { alert('Podaj nazwę folderu'); return; }
+    window.location = "/add_to_folder/" + encodeURIComponent(folder) + "/{{ paper.id }}";
+  };
+</script>
 {% endblock %}
