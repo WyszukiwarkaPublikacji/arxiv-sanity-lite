@@ -2,44 +2,44 @@
 <html>
 
 <head>
-<!-- meta info -->
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>arxiv-sanity</title>
-<!-- CSS -->
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-<!-- Favicon -->
-<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}" />
-
-<script>
-var user = {{ user | tojson }};
-</script>
-{% block variables %}
-{% endblock %}
-
+    <meta charset="UTF-8">
+    <title>Research Papers Search Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
 </head>
+
 
 <body>
 <div id="header">
-    <a href="/" id="home-link">arxiv-sanity</a>
-    <a href="/profile" id="login-link">
-        {{ 'profile' if user else 'login' }}
-    </a>
-    <a href="/stats" id="stats-link">stats</a>
-    <a href="/about" id="stats-link">about</a>
+    <a href="/" id="home-link">📄</a>
+    <div id="right-nav">
+        <a href="/stats">Stats</a>
+        <a href="/profile">My account</a>
+        {% if user %}
+        <a href="/settings">⚙️</a>
+        {% endif %}
+    </div>
 </div>
 
-{% block content %}
-{% endblock %}
+{% block content %}{% endblock %}
 
-<!-- React -->
-<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
-<!-- Babel for displaying JSX -->
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-<!-- Load our React component -->
-{% block elements %}
-{% endblock %}
-
+<script>
+document.getElementById('toggle-theme').onclick = () => {
+    document.body.classList.toggle('dark-theme');
+};
+</script>
+{% block elements %}{% endblock %}
 </body>
 </html>

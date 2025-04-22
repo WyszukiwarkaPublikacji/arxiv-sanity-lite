@@ -1,67 +1,71 @@
 {% extends "base.html" %}
 
-{% block variables %}
+{% block elements %}
+<style>
+  #header {
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-<div id="profilewrap">
+<div class="profile-page">
 
-    {% if user %}
-    <div>
-        <div>
-            <div><b>Current session</b></div>
-            <div>Logged in user: {{ user }}</div>
-        </div>
-        <br>
-        <div>
-            <div><b>Email recommendations</b></div>
-            <div>
-                Users can receive regular new paper recommendations via email based on their tags.
-                (This is still being developed, may not be running or may be unreliable.)
-                Register your email address below to receive these recommendations.
-                To stop the recommendations simply delete your email address.
-            </div>
-            <div>
-                <form id="email-form" action="{{ url_for('register_email') }}" method="post">
-                    <div class="form-group">
-                        <input type="text" class="form-control" name="email" placeholder="Email address" value="{{ email }}">
-                    </div>
-                    <input type="submit" class="btn" value="Set">
-                </form>
-            </div>
-        </div>
-        <br>
-        <div>
-            <a href="{{ url_for('logout') }}">Log out</a>
-        </div>
+  {% if user %}
+  <section class="welcome-section">
+    <div class="welcome-left">
+      <h1>Welcome, {{ user }}!</h1>
+      <p>
+        Here, you can modify your bookmarks, and enjoy browsing scientific publications.
+      </p>
+      <br />
+      <button type="button" id="logout-btn" class="btn danger">Log Out</button>
     </div>
-    {% else %}
-    <div>
-
-        <div id="profile-warning">
-            <p>
-            Okay, arxiv-sanity-lite uses a super lite version of
-            "user accounts" where there are no passwords. Basically, you can "log in"
-            with any arbitrary username. If you want to share your library with a
-            friend, you can just tell them the username. And if you'd like to keep your
-            account private, just make your username be something unique
-            and write it down somewhere safe.
-            </p>
-            <b>TLDR: there are no passwords!</b>
-        </div>
-
-        <form id="profile-login-form" action="/login" method="POST">
-            <div class="form-group">
-              <label>Username:</label>
-              <input class="form-control" type="text" name="username">
-            </div>
-            <button type="submit" class="btn">Log in</button>
-        </form>
+    <div class="welcome-right">
+      <p class="tags-title">
+        Your bookmarks:
+      </p>
+      <div class="tag-badges">
+        {% for customtag in tags %}
+        <span class="tag">{{ customtag.name }}&nbsp;<a style="text-decoration: none; color: inherit;" href="del/{{ customtag.name }}">×</a></span>
+        {% endfor %}
+      </div>
     </div>
-    {% endif %}
+  </section>
+
+  <section class="bookmarks-section">
+    <h2>Your bookmark folders</h2>
+    <div class="folder-grid">
+      {% for folder in folders %}
+        <a href="{{ url_for('view_folder', folder=folder.name) }}" class="folder-card">
+          <h3>{{ folder.name }}</h3>
+          <p>{{ folder.count }} papers</p>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      window.location = "{{ url_for('logout') }}";
+    });
+  </script>
+  {% else %}
+  <section class="welcome-section" style="display: block;">
+    <h1>Welcome!</h1>
+    <p style="text-align: justify; width: 70%;">Please log in to see your bookmarks. Take into consideration that we use a super lite version of
+      "user accounts" where there are no passwords. Basically, you can "log in"
+      with any arbitrary username. If you want to share your library with a
+      friend, you can just tell them the username. And if you'd like to keep your
+      account private, just make your username be something unique
+      and write it down somewhere safe.</p>
+    <form action="/login" method="POST" class="form-inline">
+      <input type="text" name="username" placeholder="Username" class="form-control">
+      <button type="submit" class="btn">Log In</button>
+    </form>
+  </section>
+  {% endif %}
 
 </div>
-{% endblock %}
-
-{% block elements %}
 {% endblock %}
