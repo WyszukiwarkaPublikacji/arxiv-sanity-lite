@@ -18,7 +18,7 @@ if __name__ == "__main__":
     )
 
     parser = argparse.ArgumentParser(description="Arxiv DB generator")
-    parser.add_argument("-f", "--file", type=str, help="The file to generate db from. If not specified, '$DOWNLOADS_DIR/data/downloads/<arxiv|chemrxiv>.json' is used, where the DOWNLOADS_DIR variable defaults to current working dir.")
+    parser.add_argument("-f", "--file", type=str, help="The file to generate db from. If not specified.")
     parser.add_argument("-a", "--arxiv", help="The file given is from an arxiv snapshot.", action="store_true")
     parser.add_argument("-c", "--chemrxiv", help="The file given is from a chemrxiv snapshot.", action="store_true")
     args = parser.parse_args()

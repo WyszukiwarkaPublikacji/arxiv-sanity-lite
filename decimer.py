@@ -114,7 +114,6 @@ def start_processing():
         for id_ in pdb:
             if pdb[id_]["provider"] != "chemrxiv":  # TODO: find a better criterion?
                 continue
-            print(pdb[id_], pdb[id_]["computed_chemical"])
             if pdb[id_]["computed_chemical"]:
                 continue
             try:
