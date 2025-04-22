@@ -4,11 +4,10 @@ image_metric_type = "IP"
 caption_embedding_size = 384
 caption_metric_type = "IP"
 
-model_input_size = 320
 embedding_batch_size = 32
 extraction_batch_size = 64
 rendering_min_caption_length = 15
-rendering_dpi = 150
+rendering_dpi = 120
 
 chemical_index_type = "BIN_FLAT"
 chemical_embedding_size = 2048

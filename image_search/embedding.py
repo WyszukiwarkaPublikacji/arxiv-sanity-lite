@@ -26,7 +26,7 @@ class FigureVectorizer:
         embedding /= torch.norm(embedding, p=2, dim=-1, keepdim=True)
         return embedding
         
-    def image_embedding(self, images, batch_size=32, input_size=960):        
+    def image_embedding(self, images, batch_size=32):        
         embeddings = []
         
         for idx in range(0, len(images), batch_size):
@@ -43,8 +43,8 @@ class FigureVectorizer:
         embeddings /= torch.norm(embeddings, p=2, dim=-1, keepdim=True)
         return embeddings
         
-    def __call__(self, captions, images, batch_size=32, input_size=960):
+    def __call__(self, captions, images, batch_size=32):
         caption_embeddings = self.text_embedding(captions, batch_size).cpu()
-        image_embeddings = self.image_embedding(images, batch_size, input_size).cpu() 
+        image_embeddings = self.image_embedding(images, batch_size).cpu() 
         
         return caption_embeddings.tolist(), image_embeddings.tolist()

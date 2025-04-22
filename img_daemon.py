@@ -151,7 +151,6 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None
             embeddings = vectorizer(
                 captions, 
                 figures, 
-                input_size=config.model_input_size,
                 batch_size=config.embedding_batch_size,
             )
             
@@ -160,8 +159,8 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None
 
             last_id += len(out)               
             
-            logging.info("added %d figures" % len(out))
-            logging.info("processed %d/%d files" % (len(processed_ids), total_ids))
+            logging.info("added %d figures | %d/%d processed"
+                         % (len(out), len(processed_ids), total_ids))
                 
         except Exception as e:
             logging.warning("Exception while processing: %s" % e)
