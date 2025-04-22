@@ -12,9 +12,9 @@ from aslite import config
 
 from image_search import get_paper_path
 
-
 CAPTION_REGEX = re.compile(
-    r"\b(fig(?:(?:ure)|.)?\s*\S+)\s*[:.,|]?\s+(\S+[\s\S]+)", re.IGNORECASE
+    r"\b((?:fig(?:ure)?\.?)\s*\S+)\s*[:.,|]?\s+(.*)", 
+    re.IGNORECASE | re.DOTALL
 )
 
 
@@ -24,7 +24,7 @@ def render_page(page, dpi):
     return np.asarray(image)
 
 
-def render_arxiv_id(arxiv_id, ensure_captions, dpi):
+def render_arxiv_id(arxiv_id, min_caption_length, dpi):
     try:
         path = get_paper_path(arxiv_id)
         pdf = fitz.open(path)
@@ -37,12 +37,13 @@ def render_arxiv_id(arxiv_id, ensure_captions, dpi):
             for block in page.get_text("blocks"):
                 *bbox, t = block[:5]
 
-                if not ensure_captions:
+                if min_caption_length is None:
                     blocks.append([t, bbox])
                     continue
 
-                if re.match(CAPTION_REGEX, t):
-                    blocks.append([t, bbox])
+                m = re.match(CAPTION_REGEX, t)
+                if m and len(m.group(2)) >= min_caption_length:
+                    blocks.append([m.group(2), bbox])
             
             if blocks:
                 render = render_page(page, dpi=dpi)
@@ -59,13 +60,13 @@ class PageStream:
         self,
         queue: Queue,
         batch_size: int = 1,
-        ensure_captions: bool = False,
+        min_caption_length: bool = False,
         max_workers: bool = None,
         dpi: int = 150,
     ):
         self.queue = queue
         self.batch_size = batch_size
-        self.ensure_captions = ensure_captions
+        self.min_caption_length = min_caption_length
         self.max_workers = max_workers or os.cpu_count()
         self.dpi = dpi
         
@@ -83,7 +84,7 @@ class PageStream:
                     f = executor.submit(
                         render_arxiv_id,
                         arxiv_id = arxiv_id,
-                        ensure_captions=self.ensure_captions,
+                        min_caption_length=self.min_caption_length,
                         dpi=self.dpi
                     )
                     futures.put(f)

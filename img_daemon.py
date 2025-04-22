@@ -118,16 +118,12 @@ async def fetch_papers(arxiv_ids, q, max_concurrency) -> None:
     bar.close()
 
 
-def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None:    
-    from pyinstrument import Profiler
-    profiler = Profiler()
-    profiler.start()
-    
+def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None:        
     last_id = get_last_id(idb)
     stream = PageStream(
         q, 
         batch_size=config.extraction_batch_size, 
-        ensure_captions=config.rendering_ensure_captions,
+        min_caption_length=config.rendering_min_caption_length,
         dpi=config.rendering_dpi
     )
     
@@ -169,9 +165,6 @@ def process_papers(q: Queue, extractor, vectorizer, idb, edb, total_ids) -> None
                 
         except Exception as e:
             logging.warning("Exception while processing: %s" % e)
-    
-    profiler.stop()
-    profiler.print()
             
 
 if __name__ == "__main__":

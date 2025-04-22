@@ -7,7 +7,7 @@ caption_metric_type = "IP"
 model_input_size = 320
 embedding_batch_size = 32
 extraction_batch_size = 64
-rendering_ensure_captions = True
+rendering_min_caption_length = 15
 rendering_dpi = 150
 
 chemical_index_type = "BIN_FLAT"
