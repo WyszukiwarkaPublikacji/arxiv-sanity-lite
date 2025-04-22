@@ -41,11 +41,18 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # Download snapshot
 KAGGLE_USERNAME=<username> KAGGLE_KEY=<key> ./download.sh <arxiv|chemrxiv>
 
-# set path to Milvus database
-export MILVUS_PATH="data/embeddings.db"
-
 # generate database from snapshot
 python generate_db_from_snapshot.py --<arxiv|chemrxiv>
+
+# set path to Milvus database
+export MILVUS_PATH="data/db/embeddings.db"
+
+# now you can do everything you want, e.g:
+# generate images database
+python img_daemon.py --num=1000
+
+# run server
+export FLASK_APP=serve.py; flask run
 ```
 
 
